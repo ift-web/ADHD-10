@@ -6,8 +6,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="ADHD 管理">
-  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 fill=%22%235a4a3a%22 rx=%2220%22/><text x=%2250%22 y=%2268%22 font-size=%2260%22 text-anchor=%22middle%22 fill=%22white%22>⭐</text></svg>">
-  <title>ADHD 日常管理工具 (精簡版)</title>
+  <title>ADHD 日常管理工具</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700;900&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
   <style>
@@ -21,10 +20,11 @@
     @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes fadeOutUp { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-20px); } }
     @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 50% { transform: scale(1.05); } 100% { transform: scale(1); opacity: 1; } }
     @keyframes breathe { 0%, 100% { transform: scale(1); opacity: 0.7; } 50% { transform: scale(1.6); opacity: 1; } }
     @keyframes writing { 0%, 100% { transform: translateY(0) rotate(-2deg); } 25% { transform: translateY(-1px) rotate(0deg); } 50% { transform: translateY(1px) rotate(2deg); } 75% { transform: translateY(-1px) rotate(0deg); } }
     @keyframes pulseAlert { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); box-shadow: 0 0 15px rgba(184, 80, 58, 0.4); } }
+    @keyframes gentleFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+    @keyframes confettiBurst { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-60px) scale(0.5); } }
 
     .card-enter { animation: fadeIn 0.3s ease-out forwards; }
   </style>
@@ -44,11 +44,7 @@
       tag: "#ede8df", orange: "#9a5a28", warmGlow: "#f0e6d6",
       energyLow: "#c0613a", energyMid: "#d4952a", energyHigh: "#4a7a5a", sakura: "#f0b4b4"
     };
-    const PRIORITY = {
-      high: { label: "緊急", color: "#b8503a", bg: "#fbe9e2", emoji: "🔴" },
-      medium: { label: "普通", color: "#9a5a28", bg: "#fef3e2", emoji: "🟡" },
-      low: { label: "之後", color: "#4a7a5a", bg: "#e8f2ec", emoji: "🟢" },
-    };
+    const PRIORITY = { high: { label: "緊急", color: "#b8503a", bg: "#fbe9e2", emoji: "🔴" }, medium: { label: "普通", color: "#9a5a28", bg: "#fef3e2", emoji: "🟡" }, low: { label: "之後", color: "#4a7a5a", bg: "#e8f2ec", emoji: "🟢" } };
     const SORT_ORDER = { high: 0, medium: 1, low: 2 };
     const PERIOD_LABEL = { daily: "每日", weekly: "每週", monthly: "每月", yearly: "每年" };
     const WEEKDAYS = ["週一", "週二", "週三", "週四", "週五", "週六", "週日"];
@@ -57,22 +53,18 @@
     const MONTHS = ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"];
     const ICONS = ["⭐","🏃","📖","🌱","🍱","💧","🛁","🪴","📝","🎵","🛒","💪","🧘","📞","🧴","🗂️","🪟","💡","🔧","🧺","🗑️","🧹","📦","💳","💊","✂️","🧦","🎂","📋","🏥","✈️","🔑","💰","🪪"];
     
-    const ENERGY_LEVELS = [
-      { value: 1, emoji: "🪫", label: "快沒電了", color: P.energyLow },
-      { value: 2, emoji: "🔋", label: "還行", color: P.energyMid },
-      { value: 3, emoji: "⚡", label: "電力滿滿", color: P.energyHigh },
-    ];
-    const MOOD_OPTIONS = [
-      { value: "great", emoji: "😊", label: "很好", color: "#4a7a5a" },
-      { value: "ok", emoji: "😐", label: "普通", color: "#d4952a" },
-      { value: "low", emoji: "😔", label: "低落", color: "#c0613a" },
-      { value: "anxious", emoji: "😰", label: "焦慮", color: "#b8503a" },
-      { value: "excited", emoji: "🤩", label: "興奮", color: "#9a5a28" },
+    const ENERGY_LEVELS = [{ value: 1, emoji: "🪫", label: "快沒電了", color: P.energyLow }, { value: 2, emoji: "🔋", label: "還行", color: P.energyMid }, { value: 3, emoji: "⚡", label: "電力滿滿", color: P.energyHigh }];
+    const MOOD_OPTIONS = [{ value: "great", emoji: "😊", label: "很好", color: "#4a7a5a" }, { value: "ok", emoji: "😐", label: "普通", color: "#d4952a" }, { value: "low", emoji: "😔", label: "低落", color: "#c0613a" }, { value: "anxious", emoji: "😰", label: "焦慮", color: "#b8503a" }, { value: "excited", emoji: "🤩", label: "興奮", color: "#9a5a28" }];
+
+    const INIT_ALARM_PRESETS = [
+      { id: "p_1", label: "💧 每小時喝水", type: "interval", interval: 1, start: "09:00", end: "21:00" },
+      { id: "p_2", label: "🚶 每半小時起身", type: "interval", interval: 0.5, start: "09:00", end: "18:00" },
+      { id: "p_3", label: "🌙 睡前整理", type: "fixed", time: "22:30" },
     ];
 
     const INIT_ROUTINES = [
       { id: "laundry", icon: "🧺", label: "洗衣服", period: "weekly", weekdays: ["週六"], monthdays: [], month: null, lastDone: null },
-      { id: "trash", icon: "🗑️", label: "倒垃圾", period: "weekly", weekdays: ["週三"], monthdays: [], month: null, lastDone: null }
+      { id: "bills", icon: "💳", label: "繳費", period: "monthly", weekdays: [], monthdays: [5], month: null, lastDone: null },
     ];
 
     const INIT_FOCUS_TEMPLATES = [
@@ -80,9 +72,11 @@
         { id: "s_1", text: "脫衣服進浴室", duration: 0 },
         { id: "s_2", text: "重點部位清潔", duration: 120 },
       ]},
-      { id: "f_2", icon: "🚿", title: "標準洗沐", desc: "日常下班適用。限制時間，防止完美主義發作。", energyLevel: 2, steps: [
-        { id: "s_4", text: "洗頭", duration: 300 },
-        { id: "s_6", text: "洗澡", duration: 300 },
+      { id: "f_skincare", icon: "🧴", title: "完整保養流程", desc: "含果酸/A酸等待吸收時間。", energyLevel: 2, steps: [
+        { id: "sk_1", text: "溫水洗臉", duration: 120 },
+        { id: "sk_2", text: "塗抹精華", duration: 60 },
+        { id: "sk_3", text: "等待吸收", duration: 900 },
+        { id: "sk_4", text: "後續保濕", duration: 60 },
       ]}
     ];
 
@@ -91,7 +85,7 @@
       { id: "d2", text: "聽一首喜歡的歌", emoji: "🎵" },
       { id: "d3", text: "站起來伸展 30 秒", emoji: "🤸" },
       { id: "d4", text: "看窗外遠方", emoji: "🪟" },
-      { id: "d5", text: "深呼吸三次", emoji: "🌬️" }
+      { id: "d5", text: "看一部短篇動漫", emoji: "📺" }
     ];
 
     /* ========== 工具函數 ========== */
@@ -115,23 +109,16 @@
       return streak;
     };
 
-    /* 音效與通知 (簡化版) */
-    const safeNotify = (title) => {
-      try { if (typeof window !== "undefined" && "Notification" in window && window.Notification.permission === "granted") new window.Notification("⏰ " + title, { body: "ADHD 管理提醒" }); } catch (e) {}
-    };
-    const safeRequestNotifPerm = () => {
-      try { if (typeof window !== "undefined" && "Notification" in window && window.Notification.permission === "default") window.Notification.requestPermission(); } catch (e) {}
-    };
+    /* 通知 */
+    const safeNotify = (title) => { try { if (typeof window !== "undefined" && "Notification" in window && window.Notification.permission === "granted") new window.Notification("⏰ " + title, { body: "ADHD 管理提醒" }); } catch (e) {} };
+    const safeRequestNotifPerm = () => { try { if (typeof window !== "undefined" && "Notification" in window && window.Notification.permission === "default") window.Notification.requestPermission(); } catch (e) {} };
 
     /* ========== 資料持久化 ========== */
-    const DATA_KEY = "adhd_v13_clean";
+    const DATA_KEY = "adhd_v14_clean_full";
     const defaultData = {
-      anchor: "", deadlines: [], leaveTime: "", prepMinutes: 40,
-      pendingItems: [], alarms: [], alarmPresets: [],
-      routines: INIT_ROUTINES, focusTemplates: INIT_FOCUS_TEMPLATES,
-      todayEnergy: 2, completedToday: [], completedHistory: {},
-      lastAutoGenDate: null, forgiveCount: 0, focusCompleted: 0,
-      moodLog: {}, dopamineMenu: INIT_DOPAMINE_MENU
+      anchor: "", deadlines: [], leaveTime: "", prepMinutes: 40, pendingItems: [], alarms: [], alarmPresets: INIT_ALARM_PRESETS,
+      routines: INIT_ROUTINES, focusTemplates: INIT_FOCUS_TEMPLATES, todayEnergy: 2, completedToday: [], completedHistory: {},
+      lastAutoGenDate: null, forgiveCount: 0, focusCompleted: 0, moodLog: {}, dopamineMenu: INIT_DOPAMINE_MENU
     };
 
     const loadData = () => {
@@ -139,13 +126,15 @@
         let raw = localStorage.getItem(DATA_KEY);
         if (!raw) return defaultData;
         const p = JSON.parse(raw);
+        if (!p.routines) p.routines = INIT_ROUTINES;
+        if (!p.focusTemplates) p.focusTemplates = INIT_FOCUS_TEMPLATES;
+        if (!p.alarmPresets) p.alarmPresets = INIT_ALARM_PRESETS;
         if (!p.dopamineMenu) p.dopamineMenu = INIT_DOPAMINE_MENU;
         return { ...defaultData, ...p };
       } catch (e) { return defaultData; }
     };
     const saveData = (d) => { try { localStorage.setItem(DATA_KEY, JSON.stringify(d)); } catch (e) {} };
 
-    /* 判斷今天該做的例行事項 */
     const getRoutinesForToday = (routines) => {
       const now = new Date(); const jsDay = now.getDay(); const todayWD = JS_WEEKDAY_MAP[jsDay]; const todayDate = now.getDate(); const todayMonth = MONTHS[now.getMonth()];
       return routines.filter(r => {
@@ -170,26 +159,17 @@
     };
 
     /* ========== 小元件 ========== */
-    const DayBadge = ({ n }) => (
-      <span style={{ background: n < 0 || n <= 1 ? "#fbe9e2" : n <= 3 ? "#fef3e2" : P.tag, color: n < 0 || n <= 1 ? P.danger : n <= 3 ? P.orange : P.sub, borderRadius: 20, padding: "3px 10px", fontSize: 12, fontWeight: 700, whiteSpace: "nowrap" }}>
-        {n < 0 ? `已過期 ${Math.abs(n)} 天` : n === 0 ? "今天截止！" : `${n} 天`}
-      </span>
-    );
+    const DayBadge = ({ n }) => <span style={{ background: n < 0 || n <= 1 ? "#fbe9e2" : n <= 3 ? "#fef3e2" : P.tag, color: n < 0 || n <= 1 ? P.danger : n <= 3 ? P.orange : P.sub, borderRadius: 20, padding: "3px 10px", fontSize: 12, fontWeight: 700, whiteSpace: "nowrap" }}>{n < 0 ? `已過期 ${Math.abs(n)} 天` : n === 0 ? "今天截止！" : `${n} 天`}</span>;
 
     const PriBadge = ({ value, onChange }) => {
-      const [open, setOpen] = useState(false);
-      const pv = PRIORITY[value] || PRIORITY.medium;
+      const [open, setOpen] = useState(false); const pv = PRIORITY[value] || PRIORITY.medium;
       return (
         <div style={{ position: "relative", display: "inline-block", flexShrink: 0 }}>
-          <button onClick={() => setOpen(o => !o)} style={{ ...st.btn, background: pv.bg, color: pv.color, padding: "5px 10px", fontSize: 12, fontWeight: 700, border: `1.5px solid ${pv.color}`, display: "flex", alignItems: "center", gap: 4 }}>
-            {pv.emoji} {pv.label}
-          </button>
+          <button onClick={() => setOpen(!open)} style={{ ...st.btn, background: pv.bg, color: pv.color, padding: "5px 10px", fontSize: 12, fontWeight: 700, border: `1.5px solid ${pv.color}`, display: "flex", alignItems: "center", gap: 4 }}>{pv.emoji} {pv.label}</button>
           {open && (
             <div style={{ position: "absolute", bottom: "110%", left: 0, zIndex: 100, background: P.card, border: `1px solid ${P.border}`, borderRadius: 10, boxShadow: "0 -4px 20px rgba(0,0,0,0.12)", overflow: "hidden", minWidth: 90 }}>
               {Object.entries(PRIORITY).map(([k, v]) => (
-                <button key={k} onClick={() => { onChange(k); setOpen(false); }} style={{ ...st.btn, display: "block", width: "100%", textAlign: "left", padding: "10px 14px", fontSize: 13, background: k === value ? v.bg : P.card, color: k === value ? v.color : P.text, borderRadius: 0 }}>
-                  {v.emoji} {v.label}
-                </button>
+                <button key={k} onClick={() => { onChange(k); setOpen(false); }} style={{ ...st.btn, display: "block", width: "100%", textAlign: "left", padding: "10px 14px", fontSize: 13, background: k === value ? v.bg : P.card, color: k === value ? v.color : P.text, borderRadius: 0 }}>{v.emoji} {v.label}</button>
               ))}
             </div>
           )}
@@ -200,22 +180,14 @@
     const EnergyPicker = ({ value, onChange }) => (
       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
         <span style={{ fontSize: 12, color: P.sub, fontWeight: 500 }}>今日電量：</span>
-        {ENERGY_LEVELS.map(lv => (
-          <button key={lv.value} onClick={() => onChange(lv.value)} style={{ ...st.btn, padding: "6px 14px", fontSize: 14, background: value === lv.value ? lv.color : P.tag, color: value === lv.value ? "#fff" : P.sub, borderRadius: 20, fontWeight: 600 }}>
-            {lv.emoji} {lv.label}
-          </button>
-        ))}
+        {ENERGY_LEVELS.map(lv => <button key={lv.value} onClick={() => onChange(lv.value)} style={{ ...st.btn, padding: "6px 14px", fontSize: 14, background: value === lv.value ? lv.color : P.tag, color: value === lv.value ? "#fff" : P.sub, borderRadius: 20, fontWeight: 600 }}>{lv.emoji} {lv.label}</button>)}
       </div>
     );
 
     const MoodPicker = ({ value, onChange }) => (
       <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
-        <span style={{ fontSize: 12, color: P.sub, fontWeight: 500 }}>現在心情：</span>
-        {MOOD_OPTIONS.map(m => (
-          <button key={m.value} onClick={() => onChange(m.value)} style={{ ...st.btn, padding: "5px 12px", fontSize: 13, background: value === m.value ? m.color : P.tag, color: value === m.value ? "#fff" : P.sub, borderRadius: 20, fontWeight: 600 }}>
-            {m.emoji} {m.label}
-          </button>
-        ))}
+        <span style={{ fontSize: 12, color: P.sub, fontWeight: 500 }}>心情：</span>
+        {MOOD_OPTIONS.map(m => <button key={m.value} onClick={() => onChange(m.value)} style={{ ...st.btn, padding: "5px 12px", fontSize: 13, background: value === m.value ? m.color : P.tag, color: value === m.value ? "#fff" : P.sub, borderRadius: 20, fontWeight: 600 }}>{m.emoji} {m.label}</button>)}
       </div>
     );
 
@@ -224,8 +196,7 @@
       for (let i = days - 1; i >= 0; i--) {
         const dd = new Date(d); dd.setDate(dd.getDate() - i);
         const key = `${dd.getFullYear()}-${String(dd.getMonth()+1).padStart(2,'0')}-${String(dd.getDate()).padStart(2,'0')}`;
-        const entry = moodLog[key];
-        entries.push({ date: `${dd.getMonth()+1}/${dd.getDate()}`, mood: entry?.mood || null, energy: entry?.energy || null });
+        const entry = moodLog[key]; entries.push({ date: `${dd.getMonth()+1}/${dd.getDate()}`, mood: entry?.mood || null, energy: entry?.energy || null });
       }
       const moodToY = (mood) => ({ great: 10, excited: 8, ok: 50, low: 75, anxious: 85 }[mood] ?? 50);
       const energyToY = (e) => (e === 3 ? 15 : e === 2 ? 50 : 80);
@@ -234,66 +205,91 @@
         <div style={{ background: P.tag, borderRadius: 12, padding: 14 }}>
           <svg viewBox="0 0 280 100" style={{ width: "100%", height: 80 }}>
             <line x1="0" y1="50" x2="280" y2="50" stroke={P.border} strokeWidth="0.5" strokeDasharray="4"/>
-            {entries.map((e, i) => {
-              if (!e.mood || i === 0 || !entries[i-1].mood) return null;
-              return <line key={`ml${i}`} x1={(i-1)*40+20} y1={moodToY(entries[i-1].mood)} x2={i*40+20} y2={moodToY(e.mood)} stroke={P.sakura} strokeWidth="2" opacity="0.8"/>;
-            })}
-            {entries.map((e, i) => {
-              if (!e.energy || i === 0 || !entries[i-1].energy) return null;
-              return <line key={`el${i}`} x1={(i-1)*40+20} y1={energyToY(entries[i-1].energy)} x2={i*40+20} y2={energyToY(e.energy)} stroke={P.accent} strokeWidth="2" opacity="0.6" strokeDasharray="4"/>;
-            })}
-            {entries.map((e, i) => e.mood ? (
-              <g key={`md${i}`}>
-                <circle cx={i*40+20} cy={moodToY(e.mood)} r="6" fill={P.card} stroke={P.sakura} strokeWidth="2"/>
-                <text x={i*40+20} y={moodToY(e.mood)+4} textAnchor="middle" fontSize="8">{MOOD_OPTIONS.find(m=>m.value===e.mood)?.emoji}</text>
-              </g>
-            ) : null)}
+            {entries.map((e, i) => (!e.mood || i === 0 || !entries[i-1].mood) ? null : <line key={`ml${i}`} x1={(i-1)*40+20} y1={moodToY(entries[i-1].mood)} x2={i*40+20} y2={moodToY(e.mood)} stroke={P.sakura} strokeWidth="2" opacity="0.8"/>)}
+            {entries.map((e, i) => (!e.energy || i === 0 || !entries[i-1].energy) ? null : <line key={`el${i}`} x1={(i-1)*40+20} y1={energyToY(entries[i-1].energy)} x2={i*40+20} y2={energyToY(e.energy)} stroke={P.accent} strokeWidth="2" opacity="0.6" strokeDasharray="4"/>)}
+            {entries.map((e, i) => e.mood && (
+              <g key={`md${i}`}><circle cx={i*40+20} cy={moodToY(e.mood)} r="6" fill={P.card} stroke={P.sakura} strokeWidth="2"/><text x={i*40+20} y={moodToY(e.mood)+4} textAnchor="middle" fontSize="8">{MOOD_OPTIONS.find(m=>m.value===e.mood)?.emoji}</text></g>
+            ))}
             {entries.map((e, i) => <text key={`dt${i}`} x={i*40+20} y="98" textAnchor="middle" fontSize="8" fill={P.sub}>{e.date}</text>)}
           </svg>
-          <div style={{ display: "flex", gap: 16, justifyContent: "center", marginTop: 6 }}>
-            <span style={{ fontSize: 11, color: P.sakura }}>● 心情</span>
-            <span style={{ fontSize: 11, color: P.accent }}>┄ 電量</span>
-          </div>
+          <div style={{ display: "flex", gap: 16, justifyContent: "center", marginTop: 6 }}><span style={{ fontSize: 11, color: P.sakura }}>● 心情</span><span style={{ fontSize: 11, color: P.accent }}>┄ 電量</span></div>
         </div>
       );
     };
 
-    const BodyDoubling = ({ enabled, focuserCount }) => {
-      if (!enabled) return null;
+    const BodyDoubling = ({ enabled, focuserCount }) => enabled && (
+      <div style={{ display: "flex", alignItems: "center", gap: 10, background: P.tag, borderRadius: 20, padding: "8px 16px", fontSize: 13, color: P.sub }}>
+        <span style={{ fontSize: 18, animation: "writing 1.5s ease-in-out infinite" }}>✍️</span>
+        <span>目前有 <strong style={{ color: P.accent }}>{focuserCount.toLocaleString()}</strong> 人正在和你一起專注</span>
+      </div>
+    );
+
+    const RoutineFields = ({ draft, setDraft }) => {
+      const toggleWD = (day) => { const cur = draft.weekdays || []; setDraft(d => ({ ...d, weekdays: cur.includes(day) ? cur.filter(x => x !== day) : [...cur, day] })); };
+      const toggleMD = (day) => { const cur = draft.monthdays || []; setDraft(d => ({ ...d, monthdays: (cur.includes(day) ? cur.filter(x => x !== day) : [...cur, day]).sort((a,b)=>a-b) })); };
+      const changePeriod = (p) => setDraft(d => ({ ...d, period: p, weekdays: p === "weekly" ? (d.weekdays?.length ? d.weekdays : ["週一"]) : [], monthdays: p === "monthly" ? (d.monthdays?.length ? d.monthdays : [1]) : [], month: p === "yearly" ? (d.month || "1月") : null }));
       return (
-        <div style={{ display: "flex", alignItems: "center", gap: 10, background: P.tag, borderRadius: 20, padding: "8px 16px", fontSize: 13, color: P.sub }}>
-          <span style={{ fontSize: 18, animation: "writing 1.5s ease-in-out infinite" }}>✍️</span>
-          <span>目前有 <strong style={{ color: P.accent }}>{focuserCount.toLocaleString()}</strong> 人正在和你一起專注</span>
+        <div>
+          <div style={{ marginBottom: 10 }}>
+            <div style={{ fontSize: 12, color: P.sub, marginBottom: 6 }}>圖示</div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+              {ICONS.map(ic => <button key={ic} onClick={() => setDraft(d => ({ ...d, icon: ic }))} style={{ ...st.btn, padding: "5px 9px", fontSize: 15, background: draft.icon === ic ? P.accent : P.card, color: draft.icon === ic ? "#fff" : P.text, border: `1px solid ${draft.icon === ic ? P.accent : P.border}` }}>{ic}</button>)}
+            </div>
+          </div>
+          <div style={{ ...st.row, flexWrap: "wrap", gap: 8, marginBottom: 10 }}>
+            <input style={{ ...st.inp, flex: 2, minWidth: 120 }} placeholder="事項名稱" value={draft.label} onChange={e => setDraft(d => ({ ...d, label: e.target.value }))} />
+            <select style={{ ...st.inp, flex: 1, minWidth: 90 }} value={draft.period} onChange={e => changePeriod(e.target.value)}>
+              <option value="daily">每日</option><option value="weekly">每週</option><option value="monthly">每月</option><option value="yearly">每年</option>
+            </select>
+          </div>
+          {draft.period === "weekly" && (
+            <div style={{ marginBottom: 10 }}><div style={{ fontSize: 12, color: P.sub, marginBottom: 6 }}>哪幾天？（可複選）</div><div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>{WEEKDAYS.map(d => { const sel = (draft.weekdays || []).includes(d); return <button key={d} onClick={() => toggleWD(d)} style={{ ...st.btn, padding: "6px 12px", fontSize: 13, background: sel ? P.accent : P.card, color: sel ? "#fff" : P.text, border: `1px solid ${sel ? P.accent : P.border}`, fontWeight: sel ? 700 : 400 }}>{d}</button>; })}</div></div>
+          )}
+          {draft.period === "monthly" && (
+            <div style={{ marginBottom: 10 }}><div style={{ fontSize: 12, color: P.sub, marginBottom: 6 }}>每月幾號？（可複選）</div><div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>{MONTHDAYS.map(n => { const sel = (draft.monthdays || []).includes(n); return <button key={n} onClick={() => toggleMD(n)} style={{ ...st.btn, padding: "5px 8px", fontSize: 13, background: sel ? P.accent : P.card, color: sel ? "#fff" : P.text, border: `1px solid ${sel ? P.accent : P.border}`, minWidth: 36, fontWeight: sel ? 700 : 400 }}>{n}</button>; })}</div></div>
+          )}
+          {draft.period === "yearly" && (
+            <div style={{ marginBottom: 10 }}><div style={{ fontSize: 12, color: P.sub, marginBottom: 6 }}>哪個月？</div><div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>{MONTHS.map(m => { const sel = draft.month === m; return <button key={m} onClick={() => setDraft(d => ({ ...d, month: m }))} style={{ ...st.btn, padding: "6px 12px", fontSize: 13, background: sel ? P.accent : P.card, color: sel ? "#fff" : P.text, border: `1px solid ${sel ? P.accent : P.border}`, fontWeight: sel ? 700 : 400 }}>{m}</button>; })}</div></div>
+          )}
         </div>
       );
     };
+
+    const CompletionBurst = ({ show }) => show ? (
+      <div style={{ position: "fixed", top: "40%", left: "50%", transform: "translate(-50%, -50%)", zIndex: 9999, pointerEvents: "none" }}>
+        {["🎉", "✨", "⭐", "💪", "🌟"].map((e, i) => <span key={i} style={{ position: "absolute", fontSize: 28, animation: `confettiBurst 0.8s ease-out forwards`, animationDelay: `${i * 0.05}s`, left: `${(i - 2) * 30}px`, top: `${Math.random() * 20 - 10}px` }}>{e}</span>)}
+      </div>
+    ) : null;
 
     /* ========== 主應用元件 ========== */
     const App = () => {
       const [data, setData] = useState(loadData);
       const [now, setNow] = useState(new Date());
-      // 6 核心頁籤: today, focus, selfcare, routines, alarms, review
       const [tab, setTab] = useState("today");
       
-      // 表單狀態
       const [newDL, setNewDL] = useState({ name: "", date: "" });
       const [newPending, setNewPending] = useState("");
+      
       const [newAlarm, setNewAlarm] = useState({ label: "", type: "fixed", time: "", interval: 1, start: "09:00", end: "21:00" });
+      const [editPresetsMode, setEditPresetsMode] = useState(false);
+      const [newPreset, setNewPreset] = useState({ label: "", type: "fixed", time: "", interval: 1, start: "09:00", end: "21:00" });
+      const [firedAlarmsRef] = useState(() => new Set());
+      const [banner, setBanner] = useState(null);
+      
       const [newRoutine, setNewRoutine] = useState(emptyDraft("weekly"));
       const [showRoutineForm, setShowRoutineForm] = useState(false);
       const [editingId, setEditingId] = useState(null);
       const [editDraft, setEditDraft] = useState({});
       
-      // 專注狀態
       const [editingFocus, setEditingFocus] = useState(null);
       const [focusDraft, setFocusDraft] = useState(null);
       const [activeTimer, setActiveTimer] = useState(null);
       
-      // 新增功能狀態
       const [fiveMinTimer, setFiveMinTimer] = useState(null);
       const [forceDropMode, setForceDropMode] = useState(false);
       const [breathingMode, setBreathingMode] = useState(false);
       const [showForgiveMsg, setShowForgiveMsg] = useState(false);
+      const [showBurst, setShowBurst] = useState(false);
       
       const [bodyDoublingEnabled, setBodyDoublingEnabled] = useState(false);
       const [focuserCount] = useState(() => 800 + Math.floor(Math.random() * 600));
@@ -301,29 +297,31 @@
       useEffect(() => { const t = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(t); }, []);
       useEffect(() => { saveData(data); }, [data]);
 
-      // 每日重置
       const lastDateRef = useRef(todayStr());
       useEffect(() => {
         const today = todayStr();
-        if (today !== lastDateRef.current) {
-          lastDateRef.current = today;
-          setData(d => ({ ...d, completedToday: [], anchor: "" }));
-        }
+        if (today !== lastDateRef.current) { lastDateRef.current = today; firedAlarmsRef.clear(); setData(d => ({ ...d, completedToday: [], anchor: "" })); }
       }, [now]);
 
-      // 每日自動生成例行
       useEffect(() => {
         const today = todayStr();
         if (data.lastAutoGenDate === today) return;
         const todayRoutines = getRoutinesForToday(data.routines);
         const existingTexts = new Set(data.pendingItems.map(p => p.text));
         const newItems = todayRoutines.filter(r => !existingTexts.has(r.label)).map(r => ({ id: genId(), text: r.label, priority: "medium", fromRoutine: r.id }));
-        if (newItems.length > 0 || data.lastAutoGenDate !== today) {
-          setData(d => ({ ...d, pendingItems: [...newItems, ...d.pendingItems], lastAutoGenDate: today }));
-        }
+        if (newItems.length > 0 || data.lastAutoGenDate !== today) setData(d => ({ ...d, pendingItems: [...newItems, ...d.pendingItems], lastAutoGenDate: today }));
       }, []);
 
-      // 專注定時器倒數
+      useEffect(() => {
+        const hh = String(now.getHours()).padStart(2, "0"); const mm = String(now.getMinutes()).padStart(2, "0"); const cur = `${hh}:${mm}`; const dateKey = todayStr();
+        (data.alarms || []).forEach(a => {
+          const fireKey = `${dateKey}_${a.id}_${cur}`;
+          if (a.enabled && a.time === cur && !firedAlarmsRef.has(fireKey)) {
+            firedAlarmsRef.add(fireKey); safeNotify(a.label); setBanner(a.label); setTimeout(() => setBanner(null), 5000);
+          }
+        });
+      }, [now, data.alarms]);
+
       useEffect(() => {
         const interval = setInterval(() => {
           setActiveTimer(prev => {
@@ -333,32 +331,22 @@
             if (prev.secondsLeft > 1) return { ...prev, secondsLeft: prev.secondsLeft - 1 };
             safeNotify(`${curStep.text} 時間到！`);
             const nextIdx = prev.stepIndex + 1;
-            if (nextIdx < prev.template.steps.length) {
-              return { ...prev, stepIndex: nextIdx, secondsLeft: prev.template.steps[nextIdx].duration, isRunning: prev.template.steps[nextIdx].duration > 0 };
-            } else {
-              setData(d => ({ ...d, focusCompleted: (d.focusCompleted || 0) + 1 }));
-              return { ...prev, isFinished: true, isRunning: false };
-            }
+            if (nextIdx < prev.template.steps.length) return { ...prev, stepIndex: nextIdx, secondsLeft: prev.template.steps[nextIdx].duration, isRunning: prev.template.steps[nextIdx].duration > 0 };
+            else { setData(d => ({ ...d, focusCompleted: (d.focusCompleted || 0) + 1 })); return { ...prev, isFinished: true, isRunning: false }; }
           });
         }, 1000);
         return () => clearInterval(interval);
       }, []);
 
-      // 5分鐘防拖延定時器倒數
       useEffect(() => {
         let t;
-        if (fiveMinTimer && fiveMinTimer.running && fiveMinTimer.timeLeft > 0) {
-          t = setTimeout(() => setFiveMinTimer(p => ({ ...p, timeLeft: p.timeLeft - 1 })), 1000);
-        } else if (fiveMinTimer && fiveMinTimer.running && fiveMinTimer.timeLeft === 0) {
-          safeNotify("5分鐘到了！繼續保持或休息一下。");
-          setFiveMinTimer(p => ({ ...p, running: false }));
-        }
+        if (fiveMinTimer && fiveMinTimer.running && fiveMinTimer.timeLeft > 0) t = setTimeout(() => setFiveMinTimer(p => ({ ...p, timeLeft: p.timeLeft - 1 })), 1000);
+        else if (fiveMinTimer && fiveMinTimer.running && fiveMinTimer.timeLeft === 0) { safeNotify("5分鐘到了！繼續保持或休息一下。"); setFiveMinTimer(p => ({ ...p, running: false })); }
         return () => clearTimeout(t);
       }, [fiveMinTimer]);
 
       const upd = (p) => setData(d => ({ ...d, ...p }));
-
-      // 出門倒數計算
+      
       const minsToLeave = () => { if (!data.leaveTime) return null; const [h, m] = data.leaveTime.split(":").map(Number); return h * 60 + m - (now.getHours() * 60 + now.getMinutes()); };
       const leaveCD = () => { const d = minsToLeave(); if (d === null) return null; if (d < 0) return "已出發 ✓"; if (d === 0) return "現在出門！"; return d >= 60 ? `${Math.floor(d / 60)} 小時 ${d % 60} 分後出門` : `${d} 分鐘後出門`; };
       const urgent = (() => { const d = minsToLeave(); return d !== null && d <= (data.prepMinutes || 0) && d > 0; })();
@@ -368,9 +356,8 @@
 
       const addPending = (text, priority = "medium") => { const t = (text || newPending).trim(); if (!t) return; upd({ pendingItems: [...data.pendingItems, { id: genId(), text: t, priority }] }); if (!text) setNewPending(""); };
       const completePending = (id) => {
-        const item = data.pendingItems.find(p => p.id === id);
-        const today = todayStr();
-        const hist = { ...data.completedHistory }; hist[today] = (hist[today] || 0) + 1;
+        const item = data.pendingItems.find(p => p.id === id); const today = todayStr(); const hist = { ...data.completedHistory }; hist[today] = (hist[today] || 0) + 1;
+        setShowBurst(true); setTimeout(() => setShowBurst(false), 800);
         upd({
           pendingItems: data.pendingItems.filter(p => p.id !== id),
           completedToday: [...data.completedToday, { text: item?.text, time: new Date().toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit" }) }],
@@ -381,22 +368,72 @@
       const updatePriority = (id, priority) => upd({ pendingItems: data.pendingItems.map(p => p.id === id ? { ...p, priority } : p) });
       const sortedPending = [...data.pendingItems].sort((a, b) => SORT_ORDER[a.priority] - SORT_ORDER[b.priority]);
 
-      // 🌸 一鍵原諒 (簡化版淡出效果)
       const forgiveIncomplete = () => {
         const lowPriorityItems = data.pendingItems.filter(p => p.priority === "low");
         if (lowPriorityItems.length === 0 && data.pendingItems.length === 0) return;
         const itemsToForgive = lowPriorityItems.length > 0 ? lowPriorityItems : data.pendingItems;
         const idsToRemove = new Set(itemsToForgive.map(i => i.id));
-        setShowForgiveMsg(true);
-        setTimeout(() => setShowForgiveMsg(false), 2500);
+        setShowForgiveMsg(true); setTimeout(() => setShowForgiveMsg(false), 2500);
         upd({ pendingItems: data.pendingItems.filter(p => !idsToRemove.has(p.id)), forgiveCount: (data.forgiveCount || 0) + 1 });
       };
 
-      const startFocusTimer = (tpl) => {
-        if (!tpl.steps || tpl.steps.length === 0) return;
-        setActiveTimer({ template: tpl, stepIndex: 0, secondsLeft: tpl.steps[0].duration, isRunning: tpl.steps[0].duration > 0, isFinished: false });
+      // 鬧鐘相關邏輯
+      const addAlarm = () => {
+        if (!newAlarm.label.trim()) return;
+        safeRequestNotifPerm(); let newAlarms = [...(data.alarms || [])];
+        if (newAlarm.type === 'fixed') {
+          if (newAlarm.time && !newAlarms.some(a => a.label === newAlarm.label && a.time === newAlarm.time)) newAlarms.push({ id: genId(), label: newAlarm.label, time: newAlarm.time, enabled: true });
+        } else {
+          if (!newAlarm.interval || !newAlarm.start || !newAlarm.end) return;
+          let [sh, sm] = newAlarm.start.split(':').map(Number); let [eh, em] = newAlarm.end.split(':').map(Number);
+          let curMin = sh * 60 + sm, endMin = eh * 60 + em, intMin = Math.max(0.5, Number(newAlarm.interval)) * 60;
+          while (curMin <= endMin) {
+            let timeStr = `${String(Math.floor(curMin / 60)).padStart(2, '0')}:${String(curMin % 60).padStart(2, '0')}`;
+            if (!newAlarms.some(a => a.label === newAlarm.label && a.time === timeStr)) newAlarms.push({ id: genId(), label: newAlarm.label, time: timeStr, enabled: true });
+            curMin += intMin;
+          }
+        }
+        upd({ alarms: newAlarms }); setNewAlarm({ label: "", type: "fixed", time: "", interval: 1, start: "09:00", end: "21:00" });
       };
-      
+      const applyPreset = (preset) => {
+        safeRequestNotifPerm(); let newAlarms = [...(data.alarms || [])];
+        if (preset.type === 'fixed') {
+          if (!newAlarms.some(a => a.label === preset.label && a.time === preset.time)) newAlarms.push({ id: genId(), label: preset.label, time: preset.time, enabled: true });
+        } else {
+          let [sh, sm] = preset.start.split(':').map(Number); let [eh, em] = preset.end.split(':').map(Number);
+          let curMin = sh * 60 + sm, endMin = eh * 60 + em, intMin = Math.max(0.5, Number(preset.interval)) * 60;
+          while (curMin <= endMin) {
+            let timeStr = `${String(Math.floor(curMin / 60)).padStart(2, '0')}:${String(curMin % 60).padStart(2, '0')}`;
+            if (!newAlarms.some(a => a.label === preset.label && a.time === timeStr)) newAlarms.push({ id: genId(), label: preset.label, time: timeStr, enabled: true });
+            curMin += intMin;
+          }
+        }
+        upd({ alarms: newAlarms });
+      };
+      const addPreset = () => {
+        if (!newPreset.label.trim() || (newPreset.type === 'fixed' && !newPreset.time) || (newPreset.type === 'interval' && (!newPreset.interval || !newPreset.start || !newPreset.end))) return;
+        upd({ alarmPresets: [...data.alarmPresets, { id: `p_${genId()}`, ...newPreset }] });
+        setNewPreset({ label: "", type: newPreset.type, time: "", interval: 1, start: "09:00", end: "21:00" });
+      };
+
+      // 例行相關邏輯
+      const canSaveRoutine = (d) => d.label.trim() && (d.period !== "weekly" || d.weekdays?.length > 0) && (d.period !== "monthly" || d.monthdays?.length > 0);
+      const groupedRoutines = { daily: data.routines.filter(r => r.period === "daily"), weekly: data.routines.filter(r => r.period === "weekly"), monthly: data.routines.filter(r => r.period === "monthly"), yearly: data.routines.filter(r => r.period === "yearly") };
+
+      // 專注相關邏輯
+      const openFocusEditor = (tpl = null) => { const target = tpl ? JSON.parse(JSON.stringify(tpl)) : emptyFocusDraft(); setEditingFocus(target.id); setFocusDraft(target); };
+      const closeFocusEditor = () => { setEditingFocus(null); setFocusDraft(null); };
+      const saveFocusDraft = () => {
+        if (!focusDraft.title.trim()) return; let arr = [...data.focusTemplates]; const idx = arr.findIndex(t => t.id === focusDraft.id);
+        if (idx >= 0) arr[idx] = focusDraft; else arr.push(focusDraft); upd({ focusTemplates: arr }); closeFocusEditor();
+      };
+      const focusUpdateStepTime = (idx, type, value) => {
+        const steps = [...focusDraft.steps]; const total = steps[idx].duration || 0; const curMin = Math.floor(total / 60), curSec = total % 60;
+        let v = parseInt(value) || 0; if (v < 0) v = 0;
+        if (type === 'min') steps[idx].duration = v * 60 + curSec; else if (type === 'sec') { if (v > 59) v = 59; steps[idx].duration = curMin * 60 + v; } else if (type === 'text') steps[idx].text = value;
+        setFocusDraft({ ...focusDraft, steps });
+      };
+
       const timeStr = now.toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit" });
       const dateStr = now.toLocaleDateString("zh-TW", { month: "long", day: "numeric", weekday: "long" });
       const streak = calcStreak(data.completedHistory);
@@ -405,8 +442,7 @@
       if (forceDropMode) {
         return (
           <div style={{ ...st.app, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: P.accent, color: '#fff' }}>
-            <div style={{ fontSize: 80, marginBottom: 20 }}>📱⬇️</div>
-            <div style={{ fontSize: 24, fontWeight: 900, marginBottom: 16 }}>請把手機翻面蓋上</div>
+            <div style={{ fontSize: 80, marginBottom: 20 }}>📱⬇️</div><div style={{ fontSize: 24, fontWeight: 900, marginBottom: 16 }}>請把手機翻面蓋上</div>
             <div style={{ fontSize: 15, opacity: 0.8, marginBottom: 40, textAlign: 'center', padding: '0 20px' }}>世界不會因為你離開幾分鐘就停止轉動。<br/>深呼吸，去做眼前該做的事。</div>
             <button onClick={() => setForceDropMode(false)} style={{ ...st.btn, background: 'transparent', border: '2px solid rgba(255,255,255,0.3)', color: '#fff', padding: '12px 32px', borderRadius: 30 }}>我回來了</button>
           </div>
@@ -415,42 +451,23 @@
 
       // ============ 全螢幕：專注定時器 ============
       if (activeTimer) {
-        if (activeTimer.isFinished) {
-          return (
-            <div style={{ ...st.app, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-              <div style={{ fontSize: 72, marginBottom: 20 }}>🎉</div>
-              <div style={{ fontSize: 28, fontWeight: 900, color: P.accent, marginBottom: 12 }}>太棒了！順利過關！</div>
-              <button onClick={() => setActiveTimer(null)} style={{ ...st.btn, background: P.accent, color: '#fff', padding: "16px 48px", fontSize: 18, borderRadius: 30 }}>完成返回</button>
-            </div>
-          );
-        }
-        const curStep = activeTimer.template.steps[activeTimer.stepIndex];
-        const formatClock = (sec) => `${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`;
+        if (activeTimer.isFinished) return (
+          <div style={{ ...st.app, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+            <div style={{ fontSize: 72, marginBottom: 20, animation: "gentleFloat 2s ease-in-out infinite" }}>🎉</div><div style={{ fontSize: 28, fontWeight: 900, color: P.accent, marginBottom: 12 }}>太棒了！順利過關！</div>
+            <button onClick={() => setActiveTimer(null)} style={{ ...st.btn, background: P.accent, color: '#fff', padding: "16px 48px", fontSize: 18, borderRadius: 30 }}>完成返回</button>
+          </div>
+        );
+        const curStep = activeTimer.template.steps[activeTimer.stepIndex]; const formatClock = (sec) => `${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`;
         return (
           <div style={{ ...st.app, padding: 24, display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 30 }}>
-              <button onClick={() => setActiveTimer(null)} style={{ background: 'transparent', border: 'none', color: P.sub, fontSize: 15 }}>✕ 結束</button>
-              <span style={{ color: P.sub, fontSize: 13, fontWeight: 700 }}>{activeTimer.stepIndex + 1}/{activeTimer.template.steps.length}</span>
-            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 30 }}><button onClick={() => setActiveTimer(null)} style={{ background: 'transparent', border: 'none', color: P.sub, fontSize: 15 }}>✕ 結束</button><span style={{ color: P.sub, fontSize: 13, fontWeight: 700 }}>{activeTimer.stepIndex + 1}/{activeTimer.template.steps.length}</span></div>
             {bodyDoublingEnabled && <div style={{ textAlign: "center", marginBottom: 16 }}><BodyDoubling enabled={true} focuserCount={focuserCount} /></div>}
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
               <div style={{ fontSize: 24, fontWeight: 700, color: P.text, marginBottom: 30, textAlign: 'center' }}>{curStep.text}</div>
-              {curStep.duration > 0 ? (
-                <div style={{ fontSize: 68, fontWeight: 900, color: P.accent, fontFamily: 'monospace' }}>{formatClock(activeTimer.secondsLeft)}</div>
-              ) : (
-                <div style={{ fontSize: 17, color: P.sub }}>無時間限制，完成請按下一步</div>
-              )}
+              {curStep.duration > 0 ? <div style={{ fontSize: 68, fontWeight: 900, color: P.accent, fontFamily: 'monospace' }}>{formatClock(activeTimer.secondsLeft)}</div> : <div style={{ fontSize: 17, color: P.sub }}>無時間限制，完成請按下一步</div>}
               <div style={{ marginTop: 44, display: 'flex', gap: 16 }}>
-                {curStep.duration > 0 && (
-                  <button onClick={() => setActiveTimer(p => ({...p, isRunning: !p.isRunning}))} style={{ ...st.btn, background: P.tag, color: P.accent, width: 60, height: 60, borderRadius: 30, fontSize: 22 }}>
-                    {activeTimer.isRunning ? '⏸' : '▶️'}
-                  </button>
-                )}
-                <button onClick={() => {
-                  const nextIdx = activeTimer.stepIndex + 1;
-                  if (nextIdx < activeTimer.template.steps.length) setActiveTimer(p => ({ ...p, stepIndex: nextIdx, secondsLeft: p.template.steps[nextIdx].duration, isRunning: p.template.steps[nextIdx].duration > 0 }));
-                  else { setData(d => ({ ...d, focusCompleted: (d.focusCompleted || 0) + 1 })); setActiveTimer(p => ({ ...p, isFinished: true, isRunning: false })); }
-                }} style={{ ...st.btn, background: P.accent, color: '#fff', height: 60, borderRadius: 30, padding: "0 36px", fontSize: 17 }}>完成，下一步 ⏭</button>
+                {curStep.duration > 0 && <button onClick={() => setActiveTimer(p => ({...p, isRunning: !p.isRunning}))} style={{ ...st.btn, background: P.tag, color: P.accent, width: 60, height: 60, borderRadius: 30, fontSize: 22 }}>{activeTimer.isRunning ? '⏸' : '▶️'}</button>}
+                <button onClick={() => { const nextIdx = activeTimer.stepIndex + 1; if (nextIdx < activeTimer.template.steps.length) setActiveTimer(p => ({ ...p, stepIndex: nextIdx, secondsLeft: p.template.steps[nextIdx].duration, isRunning: p.template.steps[nextIdx].duration > 0 })); else { setData(d => ({ ...d, focusCompleted: (d.focusCompleted || 0) + 1 })); setActiveTimer(p => ({ ...p, isFinished: true, isRunning: false })); } }} style={{ ...st.btn, background: P.accent, color: '#fff', height: 60, borderRadius: 30, padding: "0 36px", fontSize: 17 }}>完成，下一步 ⏭</button>
               </div>
             </div>
           </div>
@@ -460,300 +477,21 @@
       // ============ 介面 ============
       return (
         <div style={st.app}>
+          <CompletionBurst show={showBurst} />
           {showForgiveMsg && (
             <div style={{ position: "fixed", top: "40%", left: "50%", transform: "translate(-50%, -50%)", zIndex: 9999, background: "rgba(255,255,255,0.9)", padding: "20px 40px", borderRadius: 20, boxShadow: "0 10px 30px rgba(0,0,0,0.1)", textAlign: "center", animation: "fadeOutUp 2s ease-in forwards" }}>
-              <div style={{ fontSize: 24, fontWeight: 700, color: P.sakura, marginBottom: 8 }}>今天這樣就很好了</div>
-              <div style={{ fontSize: 14, color: P.sub }}>明天再說吧 🍃</div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: P.sakura, marginBottom: 8 }}>今天這樣就很好了</div><div style={{ fontSize: 14, color: P.sub }}>明天再說吧 🍃</div>
+            </div>
+          )}
+          {banner && (
+            <div onClick={() => setBanner(null)} style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 999, background: P.accent, color: "#fff", padding: "calc(env(safe-area-inset-top, 0px) + 14px) 20px 14px", fontSize: 16, textAlign: "center", fontWeight: 700, boxShadow: "0 2px 12px rgba(0,0,0,.15)", cursor: "pointer" }}>
+              ⏰ {banner} <span style={{ fontSize: 12, opacity: 0.7, marginLeft: 8 }}>點擊關閉</span>
             </div>
           )}
 
-          {/* Header */}
           <div style={{ padding: "calc(env(safe-area-inset-top, 0px) + 20px) 18px 14px", borderBottom: `1px solid ${P.border}`, background: P.card }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
-              <div>
-                <div style={{ fontSize: 24, fontWeight: 900, color: P.accent }}>ADHD 核心管理</div>
-                <div style={{ fontSize: 13, color: P.sub, marginTop: 4 }}>{dateStr}</div>
-              </div>
-              <div style={{ textAlign: "right" }}>
-                <div style={{ fontSize: 28, fontWeight: 700, color: P.accent, fontFamily: "monospace" }}>{timeStr}</div>
-              </div>
+              <div><div style={{ fontSize: 24, fontWeight: 900, color: P.accent }}>ADHD 核心管理</div><div style={{ fontSize: 13, color: P.sub, marginTop: 4 }}>{dateStr}</div></div>
+              <div style={{ textAlign: "right" }}><div style={{ fontSize: 28, fontWeight: 700, color: P.accent, fontFamily: "monospace" }}>{timeStr}</div></div>
             </div>
-            
-            {/* 導航列 (6核心頁籤) */}
-            <div style={{ display: "flex", gap: 6, marginTop: 14, overflowX: "auto", paddingBottom: 4 }}>
-              {[
-                ["today", "📋 總覽"], ["focus", "⏳ 專注"], ["selfcare", "💖 自我照顧"],
-                ["routines", "🔁 例行"], ["alarms", "⏰ 提醒"], ["review", "📊 回顧"]
-              ].map(([k, l]) => (
-                <button key={k} onClick={() => setTab(k)} style={{
-                  ...st.btn, padding: "8px 14px", fontSize: 13, flexShrink: 0, fontWeight: 600,
-                  background: tab === k ? P.accent : "transparent",
-                  color: tab === k ? "#fff" : P.sub, border: tab === k ? "none" : `1px solid ${P.border}`,
-                }}>{l}</button>
-              ))}
-            </div>
-          </div>
-
-          {/* ==================== 1. 總覽 ==================== */}
-          {tab === "today" && <>
-            {/* 電量 */}
-            <div style={{ ...st.sec, animation: "fadeIn 0.3s ease-out" }}>
-              <div style={st.sB}><EnergyPicker value={data.todayEnergy} onChange={v => upd({ todayEnergy: v })} /></div>
-            </div>
-
-            {/* 防拖延與強制放下快速工具 */}
-            <div style={{ margin: "16px 14px 0", display: "flex", gap: 10 }}>
-              <button onClick={() => setForceDropMode(true)} style={{ ...st.btn, flex: 1, background: P.danger, color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", padding: "12px 0" }}>
-                <span style={{ fontSize: 20, marginBottom: 4 }}>📵</span>
-                <span style={{ fontSize: 13, fontWeight: 700 }}>強制放下</span>
-              </button>
-              <button onClick={() => setFiveMinTimer({ running: true, timeLeft: 300 })} style={{ ...st.btn, flex: 1, background: fiveMinTimer?.running ? P.orange : P.tag, color: fiveMinTimer?.running ? "#fff" : P.accent, display: "flex", flexDirection: "column", alignItems: "center", padding: "12px 0", border: `1px solid ${P.orange}`, animation: fiveMinTimer?.running ? "pulseAlert 2s infinite" : "none" }}>
-                <span style={{ fontSize: 20, marginBottom: 4 }}>⏱️</span>
-                <span style={{ fontSize: 13, fontWeight: 700 }}>
-                  {fiveMinTimer?.running ? `剩餘 ${Math.floor(fiveMinTimer.timeLeft/60)}:${String(fiveMinTimer.timeLeft%60).padStart(2,'0')}` : "防拖延 5 分鐘"}
-                </span>
-              </button>
-            </div>
-
-            {/* 錨點 */}
-            <div style={st.sec}>
-              <div style={st.sH}><span style={st.sT}>⚓ 今日錨點</span><span style={{ fontSize: 12, color: P.sub }}>最重要的一件事</span></div>
-              <div style={st.sB}><input style={{ ...st.inp, fontSize: 16, fontWeight: 700, borderColor: data.anchor ? P.accent : P.border }} placeholder="今天有什麼不能錯過的事？" value={data.anchor} onChange={e => upd({ anchor: e.target.value })} /></div>
-            </div>
-
-            {/* 出門時間 */}
-            <div style={{ ...st.sec, border: urgent ? `2px solid ${P.danger}` : `1px solid ${P.border}` }}>
-              <div style={st.sH}><span style={st.sT}>🚪 出門時間</span>{leaveCD() && <span style={{ fontSize: 13, color: urgent ? P.danger : P.green, fontWeight: 700 }}>{leaveCD()}</span>}</div>
-              <div style={st.sB}>
-                <input type="time" style={{ ...st.inp, maxWidth: 160, marginBottom: 12 }} value={data.leaveTime} onChange={e => upd({ leaveTime: e.target.value })} />
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: 13, color: P.sub }}>需準備</span>
-                  <input type="number" style={{ ...st.inp, width: 60, padding: "6px", textAlign: "center" }} value={data.prepMinutes} onChange={e => { const v = parseInt(e.target.value); upd({ prepMinutes: isNaN(v) ? 0 : Math.max(0, v) }); }} />
-                  <span style={{ fontSize: 13, color: P.sub }}>分鐘</span>
-                </div>
-              </div>
-            </div>
-
-            {/* 截止倒數 */}
-            <div style={st.sec}>
-              <div style={st.sH}><span style={st.sT}>📅 截止倒數</span></div>
-              <div style={st.sB}>
-                <div style={{ ...st.row, marginBottom: 12 }}>
-                  <input style={{ ...st.inp, flex: 2 }} placeholder="事項名稱" value={newDL.name} onChange={e => setNewDL(d => ({ ...d, name: e.target.value }))} />
-                  <input type="date" style={{ ...st.inp, flex: 1.5 }} value={newDL.date} onChange={e => setNewDL(d => ({ ...d, date: e.target.value }))} />
-                  <button style={{ ...st.btn, background: P.accent, color: "#fff" }} onClick={addDL}>新增</button>
-                </div>
-                {sortedDL.map(dl => {
-                  const dlDate = new Date(dl.date); const dldays = Math.ceil((dlDate - new Date().setHours(0,0,0,0)) / 86400000);
-                  return (
-                    <div key={dl.id} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderTop: `1px solid ${P.border}` }}>
-                      <span style={{ fontSize: 14 }}>{dl.name}</span>
-                      <div style={{ display: "flex", gap: 8 }}><DayBadge n={dldays} /><button style={{ ...st.btn, background: "transparent", color: P.danger, padding: 0 }} onClick={() => upd({ deadlines: data.deadlines.filter(d => d.id !== dl.id) })}>✕</button></div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* 暫放區 & 一鍵原諒 */}
-            <div style={st.sec}>
-              <div style={st.sH}><span style={st.sT}>📦 暫放區 ({sortedPending.length})</span></div>
-              <div style={st.sB}>
-                <div style={{ ...st.row, marginBottom: 14 }}>
-                  <input style={{ ...st.inp, flex: 1 }} placeholder="腦中有什麼？丟入暫放區…" value={newPending} onChange={e => setNewPending(e.target.value)} onKeyDown={e => e.key === "Enter" && addPending()} />
-                  <button style={{ ...st.btn, background: P.accent, color: "#fff" }} onClick={() => addPending()}>丟入</button>
-                </div>
-                {sortedPending.map(item => (
-                  <div key={item.id} className="card-enter" style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0", borderTop: `1px solid ${P.border}` }}>
-                    <PriBadge value={item.priority} onChange={v => updatePriority(item.id, v)} />
-                    <span style={{ flex: 1, fontSize: 14 }}>{item.text}</span>
-                    <button style={{ ...st.btn, background: P.green, color: "#fff", padding: "6px 12px", fontSize: 12, borderRadius: 20 }} onClick={() => completePending(item.id)}>完成 ✓</button>
-                  </div>
-                ))}
-                {sortedPending.length > 0 && (
-                  <button onClick={forgiveIncomplete} style={{ ...st.btn, width: "100%", background: `linear-gradient(135deg, ${P.sakura}, ${P.warmGlow})`, color: "#fff", padding: "12px", marginTop: 12, fontWeight: 700 }}>
-                    🌸 一鍵原諒 — 今天這樣就很好了
-                  </button>
-                )}
-              </div>
-            </div>
-          </>}
-
-          {/* ==================== 2. 專注 ==================== */}
-          {tab === "focus" && (
-            <div style={st.sec}>
-              <div style={st.sH}><span style={st.sT}>⏳ 專注模式</span></div>
-              <div style={st.sB}>
-                {/* 虛擬共事 */}
-                <div style={{ marginBottom: 20, background: P.tag, padding: 14, borderRadius: 12 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>👥 虛擬共事 (Body Doubling)</div>
-                  <button onClick={() => setBodyDoublingEnabled(v => !v)} style={{ ...st.btn, width: "100%", background: bodyDoublingEnabled ? P.accent : P.card, color: bodyDoublingEnabled ? "#fff" : P.text, border: `1px solid ${P.border}` }}>
-                    {bodyDoublingEnabled ? "關閉陪伴模式" : "開啟陪伴模式"}
-                  </button>
-                  {bodyDoublingEnabled && <div style={{ marginTop: 10 }}><BodyDoubling enabled={true} focuserCount={focuserCount} /></div>}
-                </div>
-
-                {/* 步驟拆解定時器 */}
-                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 12 }}>📝 步驟拆解定時器</div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {data.focusTemplates.map(tpl => (
-                    <div key={tpl.id} style={{ border: `1px solid ${P.border}`, borderRadius: 12, padding: 14, display: "flex", gap: 12, alignItems: "center" }}>
-                      <div style={{ fontSize: 28 }}>{tpl.icon}</div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: 700, color: P.accent }}>{tpl.title}</div>
-                        <div style={{ fontSize: 12, color: P.sub, marginTop: 4 }}>{tpl.desc}</div>
-                      </div>
-                      <button onClick={() => startFocusTimer(tpl)} style={{ background: P.accent, color: "#fff", border: "none", borderRadius: "50%", width: 40, height: 40, fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>▶</button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ==================== 3. 自我照顧 ==================== */}
-          {tab === "selfcare" && (
-            <>
-              <div style={st.sec}>
-                <div style={st.sH}><span style={st.sT}>💖 心情記錄</span></div>
-                <div style={st.sB}>
-                  <MoodPicker value={data.moodLog[todayStr()]?.mood} onChange={m => { const log = {...data.moodLog}; log[todayStr()] = { mood: m, energy: data.todayEnergy }; upd({ moodLog: log }); }} />
-                </div>
-              </div>
-
-              <div style={st.sec}>
-                <div style={st.sH}><span style={st.sT}>🌬️ 呼吸練習</span></div>
-                <div style={{ ...st.sB, display: "flex", flexDirection: "column", alignItems: "center", padding: "40px 20px" }}>
-                  <button onClick={() => setBreathingMode(!breathingMode)} style={{ border: "none", background: "transparent", cursor: "pointer", outline: "none" }}>
-                    <div style={{ width: 120, height: 120, borderRadius: "50%", background: `linear-gradient(135deg, #a8caba, ${P.green})`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 18, fontWeight: 700, animation: breathingMode ? "breathe 8s ease-in-out infinite" : "none", transition: "all 0.3s" }}>
-                      {breathingMode ? "吸氣..." : "點擊開始"}
-                    </div>
-                  </button>
-                  <div style={{ marginTop: 30, fontSize: 13, color: P.sub, textAlign: "center" }}>跟著圓圈的節奏：變大時吸氣，縮小時吐氣。</div>
-                </div>
-              </div>
-
-              <div style={st.sec}>
-                <div style={st.sH}><span style={st.sT}>✨ 多巴胺菜單</span></div>
-                <div style={st.sB}>
-                  <div style={{ fontSize: 12, color: P.sub, marginBottom: 12 }}>不知道做什麼能讓自己開心嗎？挑一個快速的吧！</div>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                    {data.dopamineMenu.map(d => (
-                      <button key={d.id} onClick={() => safeNotify(`已完成：${d.text}！`)} style={{ ...st.btn, background: P.tag, border: `1px solid ${P.border}`, color: P.accent, display: "flex", alignItems: "center", gap: 6 }}>
-                        <span>{d.emoji}</span> {d.text}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* ==================== 4. 例行 ==================== */}
-          {tab === "routines" && (
-            <div style={st.sec}>
-              <div style={st.sH}><span style={st.sT}>🔁 例行清單</span></div>
-              <div style={st.sB}>
-                {Object.entries({ daily: data.routines.filter(r => r.period === "daily"), weekly: data.routines.filter(r => r.period === "weekly"), monthly: data.routines.filter(r => r.period === "monthly") }).map(([period, items]) => items.length > 0 && (
-                  <div key={period} style={{ marginBottom: 16 }}>
-                    <div style={{ fontSize: 12, color: P.sub, fontWeight: 700, marginBottom: 8 }}>{PERIOD_LABEL[period]}</div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                      {items.map(r => (
-                        <div key={r.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: P.card, border: `1px solid ${P.border}`, borderRadius: 12 }}>
-                          <span style={{ fontSize: 20 }}>{r.icon}</span>
-                          <div>
-                            <div style={{ fontSize: 14, fontWeight: 600 }}>{r.label}</div>
-                            {r.lastDone && <div style={{ fontSize: 11, color: P.sub, marginTop: 2 }}>上次：{r.lastDone}</div>}
-                          </div>
-                          <button onClick={() => addPending(r.label)} style={{ ...st.btn, marginLeft: "auto", background: P.tag, fontSize: 12, padding: "6px 12px" }}>加到今日</button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* ==================== 5. 提醒 ==================== */}
-          {tab === "alarms" && (
-            <div style={st.sec}>
-              <div style={st.sH}><span style={st.sT}>⏰ 單次或間隔提醒</span></div>
-              <div style={st.sB}>
-                <div style={{ background: P.tag, borderRadius: 10, padding: "10px", fontSize: 12, color: P.sub, marginBottom: 16 }}>
-                  ⚠️ 需要瀏覽器通知權限，並將網頁加入主畫面。
-                </div>
-                <div style={{ ...st.row, marginBottom: 12 }}>
-                  <input style={{ ...st.inp, flex: 1 }} placeholder="提醒名稱" value={newAlarm.label} onChange={e => setNewAlarm({...newAlarm, label: e.target.value})} />
-                  <input type="time" style={{ ...st.inp, width: "110px" }} value={newAlarm.time} onChange={e => setNewAlarm({...newAlarm, time: e.target.value})} />
-                  <button style={{ ...st.btn, background: P.accent, color: "#fff" }} onClick={() => {
-                    if (newAlarm.label && newAlarm.time) {
-                      safeRequestNotifPerm();
-                      upd({ alarms: [...data.alarms, { id: genId(), label: newAlarm.label, time: newAlarm.time, enabled: true }] });
-                      setNewAlarm({ label: "", type: "fixed", time: "", interval: 1, start: "09:00", end: "21:00" });
-                    }
-                  }}>新增</button>
-                </div>
-                {data.alarms.map(a => (
-                  <div key={a.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", borderTop: `1px solid ${P.border}` }}>
-                    <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                      <span style={{ fontFamily: "monospace", fontWeight: 700, color: a.enabled ? P.accent : P.sub }}>{a.time}</span>
-                      <span style={{ fontSize: 14, color: a.enabled ? P.text : P.sub }}>{a.label}</span>
-                    </div>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <button onClick={() => upd({ alarms: data.alarms.map(al => al.id === a.id ? { ...al, enabled: !al.enabled } : al) })} style={{ ...st.btn, background: a.enabled ? P.green : P.tag, color: a.enabled ? "#fff" : P.sub, padding: "4px 10px", fontSize: 12 }}>{a.enabled ? "開" : "關"}</button>
-                      <button onClick={() => upd({ alarms: data.alarms.filter(al => al.id !== a.id) })} style={{ ...st.btn, background: "transparent", color: P.danger, padding: "4px 8px" }}>✕</button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* ==================== 6. 回顧 ==================== */}
-          {tab === "review" && (
-            <>
-              <div style={st.sec}>
-                <div style={st.sH}><span style={st.sT}>📊 7天趨勢</span></div>
-                <div style={st.sB}><MoodChart moodLog={data.moodLog} /></div>
-              </div>
-
-              <div style={st.sec}>
-                <div style={st.sH}><span style={st.sT}>🏆 我的里程碑</span></div>
-                <div style={st.sB}>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                    <div style={{ background: P.tag, borderRadius: 12, padding: "16px", textAlign: "center" }}>
-                      <div style={{ fontSize: 24, marginBottom: 4 }}>🔥</div>
-                      <div style={{ fontSize: 28, fontWeight: 900, color: P.accent }}>{streak}</div>
-                      <div style={{ fontSize: 12, color: P.sub }}>目前連續天數</div>
-                    </div>
-                    <div style={{ background: P.tag, borderRadius: 12, padding: "16px", textAlign: "center" }}>
-                      <div style={{ fontSize: 24, marginBottom: 4 }}>✅</div>
-                      <div style={{ fontSize: 28, fontWeight: 900, color: P.accent }}>{Object.values(data.completedHistory || {}).reduce((a,b) => a+b, 0)}</div>
-                      <div style={{ fontSize: 12, color: P.sub }}>累計完成任務</div>
-                    </div>
-                    <div style={{ background: P.tag, borderRadius: 12, padding: "16px", textAlign: "center" }}>
-                      <div style={{ fontSize: 24, marginBottom: 4 }}>🌸</div>
-                      <div style={{ fontSize: 28, fontWeight: 900, color: P.accent }}>{data.forgiveCount || 0}</div>
-                      <div style={{ fontSize: 12, color: P.sub }}>懂得放下的次數</div>
-                    </div>
-                    <div style={{ background: P.tag, borderRadius: 12, padding: "16px", textAlign: "center" }}>
-                      <div style={{ fontSize: 24, marginBottom: 4 }}>🧘</div>
-                      <div style={{ fontSize: 28, fontWeight: 900, color: P.accent }}>{data.focusCompleted || 0}</div>
-                      <div style={{ fontSize: 12, color: P.sub }}>專注完成次數</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-
-          <div style={{ textAlign: "center", marginTop: 32, fontSize: 13, color: P.sub, fontFamily: "'Noto Serif TC', serif", letterSpacing: 2 }}>一次只需要做好一件事 ✦</div>
-        </div>
-      );
-    };
-
-    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
-  </script>
-</body>
-</html>
+            <div style={{ display: "flex", gap: 6, marginTop:
