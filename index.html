@@ -35,16 +35,62 @@
 </head>
 <body>
   <div id="root"><div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;color:#7d6e5e">載入中…</div></div>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script>
     window.onerror = function(msg, url, line, col, err) {
       var root = document.getElementById('root');
-      if (root) root.innerHTML = '<div style="padding:40px;font-family:sans-serif;color:#b8503a"><h3>載入錯誤</h3><p>' + msg + '</p><p>Line: ' + line + '</p></div>';
+      if (root) root.innerHTML = '<div style="padding:40px;font-family:sans-serif;color:#b8503a"><h3>載入錯誤</h3><p>' + (msg||'Unknown') + '</p><p>URL: ' + (url||'N/A') + '</p><p>Line: ' + line + '</p><p style="margin-top:16px;color:#7d6e5e;font-size:13px">請嘗試重新整理頁面，或檢查網路連線。</p></div>';
     };
+    // CDN loader with fallback
+    function loadScript(urls, check, callback) {
+      var i = 0;
+      function tryNext() {
+        if (i >= urls.length) {
+          document.getElementById('root').innerHTML = '<div style="padding:40px;font-family:sans-serif;color:#b8503a"><h3>無法載入必要的程式庫</h3><p>請檢查網路連線後重新整理。</p></div>';
+          return;
+        }
+        var s = document.createElement('script');
+        s.src = urls[i];
+        s.crossOrigin = 'anonymous';
+        s.onload = function() { if (check()) callback(); else { i++; tryNext(); } };
+        s.onerror = function() { i++; tryNext(); };
+        document.head.appendChild(s);
+      }
+      if (check()) { callback(); return; }
+      tryNext();
+    }
+    // Load React -> ReactDOM -> Babel -> then compile the app
+    loadScript([
+      'https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js',
+      'https://unpkg.com/react@18/umd/react.production.min.js',
+      'https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js'
+    ], function(){ return typeof React !== 'undefined'; }, function(){
+      loadScript([
+        'https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js',
+        'https://unpkg.com/react-dom@18/umd/react-dom.production.min.js',
+        'https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js'
+      ], function(){ return typeof ReactDOM !== 'undefined'; }, function(){
+        loadScript([
+          'https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.9/babel.min.js',
+          'https://unpkg.com/@babel/standalone/babel.min.js',
+          'https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js'
+        ], function(){ return typeof Babel !== 'undefined'; }, function(){
+          // All loaded - compile and run the babel script
+          var babelScript = document.getElementById('app-source');
+          if (babelScript) {
+            try {
+              var compiled = Babel.transform(babelScript.textContent, { presets: ['react'] }).code;
+              var runScript = document.createElement('script');
+              runScript.textContent = compiled;
+              document.body.appendChild(runScript);
+            } catch(e) {
+              document.getElementById('root').innerHTML = '<div style="padding:40px;font-family:sans-serif;color:#b8503a"><h3>程式碼編譯錯誤</h3><p>' + e.message + '</p></div>';
+            }
+          }
+        });
+      });
+    });
   </script>
-  <script type="text/babel">
+  <script id="app-source" type="text/plain"  >
 var { useState, useEffect, useRef, useMemo } = React;
 
 /* ====== 色彩 ====== */
