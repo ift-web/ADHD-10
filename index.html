@@ -1,497 +1,1212 @@
 <!DOCTYPE html>
+
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="ADHD 管理">
+  <meta name="apple-mobile-web-app-title" content="ADHD">
   <title>ADHD 日常管理工具</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700;900&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700;900&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
   <style>
-    *, *::before, *::after { box-sizing: border-box; }
-    body { margin: 0; padding: 0; background-color: #f5f1eb; -webkit-tap-highlight-color: transparent; font-family: 'Noto Sans TC', sans-serif; }
-    ::-webkit-scrollbar { display: none; }
-    html { scroll-behavior: smooth; }
-    input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-    input[type=number] { -moz-appearance: textfield; }
-
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes fadeOutUp { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-20px); } }
-    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes breathe { 0%, 100% { transform: scale(1); opacity: 0.7; } 50% { transform: scale(1.6); opacity: 1; } }
-    @keyframes writing { 0%, 100% { transform: translateY(0) rotate(-2deg); } 25% { transform: translateY(-1px) rotate(0deg); } 50% { transform: translateY(1px) rotate(2deg); } 75% { transform: translateY(-1px) rotate(0deg); } }
-    @keyframes pulseAlert { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); box-shadow: 0 0 15px rgba(184, 80, 58, 0.4); } }
-    @keyframes gentleFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
-    @keyframes confettiBurst { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-60px) scale(0.5); } }
-
-    .card-enter { animation: fadeIn 0.3s ease-out forwards; }
+    *,*::before,*::after{box-sizing:border-box}
+    body{margin:0;padding:0;background:#f5f1eb;font-family:'Noto Sans TC',sans-serif;-webkit-tap-highlight-color:transparent}
+    ::-webkit-scrollbar{display:none}
+    html{scroll-behavior:smooth}
+    input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+    input[type=number]{-moz-appearance:textfield}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes popIn{0%{transform:scale(.8);opacity:0}50%{transform:scale(1.05)}100%{transform:scale(1);opacity:1}}
+    @keyframes confetti{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-60px) scale(.5)}}
+    @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+    @keyframes breatheIn{0%{transform:scale(.6);opacity:.4}100%{transform:scale(1);opacity:1}}
+    @keyframes breatheOut{0%{transform:scale(1);opacity:1}100%{transform:scale(.6);opacity:.4}}
+    @keyframes breatheHold{0%,100%{transform:scale(1);opacity:1}}
+    @keyframes starPop{0%{transform:scale(0) rotate(-30deg);opacity:0}60%{transform:scale(1.3) rotate(5deg);opacity:1}100%{transform:scale(1) rotate(0);opacity:1}}
+    @keyframes barGrow{from{width:0}}
+    @keyframes urgentPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(184,80,58,.4)}50%{transform:scale(1.02);box-shadow:0 0 0 20px rgba(184,80,58,0)}}
+    @keyframes slowBreathe{0%,100%{opacity:.6;transform:scale(.98)}50%{opacity:1;transform:scale(1.02)}}
+    @keyframes shake{0%{transform:rotate(0)}10%{transform:rotate(15deg)}20%{transform:rotate(-15deg)}30%{transform:rotate(10deg)}40%{transform:rotate(-10deg)}50%,100%{transform:rotate(0)}}
   </style>
 </head>
 <body>
   <div id="root"></div>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script type="text/babel">
-    const { useState, useEffect, useRef, useCallback, useMemo } = React;
+var { useState, useEffect, useRef, useMemo } = React;
 
-    /* ========== 色彩與常數系統 ========== */
-    const P = {
-      bg: "#f5f1eb", card: "#fffdf8", border: "#e0d6c8", text: "#2e2418", sub: "#7d6e5e", 
-      accent: "#5a4a3a", accentLight: "#7c6a56", danger: "#b8503a", green: "#4a7a5a",
-      tag: "#ede8df", orange: "#9a5a28", warmGlow: "#f0e6d6",
-      energyLow: "#c0613a", energyMid: "#d4952a", energyHigh: "#4a7a5a", sakura: "#f0b4b4"
-    };
-    const PRIORITY = { high: { label: "緊急", color: "#b8503a", bg: "#fbe9e2", emoji: "🔴" }, medium: { label: "普通", color: "#9a5a28", bg: "#fef3e2", emoji: "🟡" }, low: { label: "之後", color: "#4a7a5a", bg: "#e8f2ec", emoji: "🟢" } };
-    const SORT_ORDER = { high: 0, medium: 1, low: 2 };
-    const PERIOD_LABEL = { daily: "每日", weekly: "每週", monthly: "每月", yearly: "每年" };
-    const WEEKDAYS = ["週一", "週二", "週三", "週四", "週五", "週六", "週日"];
-    const JS_WEEKDAY_MAP = { 1: "週一", 2: "週二", 3: "週三", 4: "週四", 5: "週五", 6: "週六", 0: "週日" };
-    const MONTHDAYS = Array.from({ length: 31 }, (_, i) => i + 1);
-    const MONTHS = ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"];
-    const ICONS = ["⭐","🏃","📖","🌱","🍱","💧","🛁","🪴","📝","🎵","🛒","💪","🧘","📞","🧴","🗂️","🪟","💡","🔧","🧺","🗑️","🧹","📦","💳","💊","✂️","🧦","🎂","📋","🏥","✈️","🔑","💰","🪪"];
-    
-    const ENERGY_LEVELS = [{ value: 1, emoji: "🪫", label: "快沒電了", color: P.energyLow }, { value: 2, emoji: "🔋", label: "還行", color: P.energyMid }, { value: 3, emoji: "⚡", label: "電力滿滿", color: P.energyHigh }];
-    const MOOD_OPTIONS = [{ value: "great", emoji: "😊", label: "很好", color: "#4a7a5a" }, { value: "ok", emoji: "😐", label: "普通", color: "#d4952a" }, { value: "low", emoji: "😔", label: "低落", color: "#c0613a" }, { value: "anxious", emoji: "😰", label: "焦慮", color: "#b8503a" }, { value: "excited", emoji: "🤩", label: "興奮", color: "#9a5a28" }];
+/* ====== 色彩 ====== */
+var P = {
+bg:”#f5f1eb”, card:”#fffdf8”, border:”#e0d6c8”,
+text:”#2e2418”, sub:”#7d6e5e”, accent:”#5a4a3a”,
+accentLight:”#7c6a56”, danger:”#b8503a”, green:”#4a7a5a”,
+tag:”#ede8df”, orange:”#9a5a28”, warmGlow:”#f0e6d6”,
+eLow:”#c0613a”, eMid:”#d4952a”, eHigh:”#4a7a5a”,
+sakura:”#f0b4b4”, sakuraLight:”#fce4ec”, reward:”#c4953a”
+};
 
-    const INIT_ALARM_PRESETS = [
-      { id: "p_1", label: "💧 每小時喝水", type: "interval", interval: 1, start: "09:00", end: "21:00" },
-      { id: "p_2", label: "🚶 每半小時起身", type: "interval", interval: 0.5, start: "09:00", end: "18:00" },
-      { id: "p_3", label: "🌙 睡前整理", type: "fixed", time: "22:30" },
-    ];
+var PRIORITY = {
+high:{label:“緊急”,color:”#b8503a”,bg:”#fbe9e2”,emoji:“🔴”},
+medium:{label:“普通”,color:”#9a5a28”,bg:”#fef3e2”,emoji:“🟡”},
+low:{label:“之後”,color:”#4a7a5a”,bg:”#e8f2ec”,emoji:“🟢”}
+};
+var SORT_ORDER = {high:0,medium:1,low:2};
+var PERIOD_LABEL = {daily:“每日”,weekly:“每週”,monthly:“每月”,yearly:“每年”};
+var WEEKDAYS = [“週一”,“週二”,“週三”,“週四”,“週五”,“週六”,“週日”];
+var JS_WD = {1:“週一”,2:“週二”,3:“週三”,4:“週四”,5:“週五”,6:“週六”,0:“週日”};
+var MONTHDAYS = Array.from({length:31},function(_,i){return i+1});
+var MONTHS = [“1月”,“2月”,“3月”,“4月”,“5月”,“6月”,“7月”,“8月”,“9月”,“10月”,“11月”,“12月”];
+var ICONS = [“⭐”,“🏃”,“📖”,“🐶”,“🌱”,“🍱”,“💧”,“🛁”,“🪴”,“📝”,“🎵”,“🛒”,“💪”,“🧘”,“📞”,“🧴”,“🗂️”,“💡”,“🔧”,“🧺”,“🗑️”,“🧹”,“📦”,“💳”,“💊”,“✂️”,“🧦”,“📋”,“🏥”,“✈️”,“🔑”,“💰”];
+var ENERGY = [
+{value:1,emoji:“🪫”,label:“快沒電了”,color:P.eLow},
+{value:2,emoji:“🔋”,label:“還行”,color:P.eMid},
+{value:3,emoji:“⚡”,label:“電力滿滿”,color:P.eHigh}
+];
 
-    const INIT_ROUTINES = [
-      { id: "laundry", icon: "🧺", label: "洗衣服", period: "weekly", weekdays: ["週六"], monthdays: [], month: null, lastDone: null },
-      { id: "bills", icon: "💳", label: "繳費", period: "monthly", weekdays: [], monthdays: [5], month: null, lastDone: null },
-    ];
+var INIT_PRESETS = [
+{id:“p1”,label:“💧 每小時喝水”,type:“interval”,interval:1,start:“09:00”,end:“21:00”},
+{id:“p2”,label:“🚶 每半小時起身”,type:“interval”,interval:0.5,start:“09:00”,end:“18:00”},
+{id:“p3”,label:“🍱 準備吃午餐”,type:“fixed”,time:“11:30”},
+{id:“p4”,label:“💊 吃藥”,type:“fixed”,time:“09:00”},
+{id:“p5”,label:“🌙 睡前整理”,type:“fixed”,time:“22:30”},
+{id:“p6”,label:“☀️ 起床”,type:“fixed”,time:“08:00”}
+];
 
-    const INIT_FOCUS_TEMPLATES = [
-      { id: "f_1", icon: "🔋", title: "極簡生存洗沐", desc: "電力10%專用。不要管細節，有弄濕就算贏。", energyLevel: 1, steps: [
-        { id: "s_1", text: "脫衣服進浴室", duration: 0 },
-        { id: "s_2", text: "重點部位清潔", duration: 120 },
-      ]},
-      { id: "f_skincare", icon: "🧴", title: "完整保養流程", desc: "含果酸/A酸等待吸收時間。", energyLevel: 2, steps: [
-        { id: "sk_1", text: "溫水洗臉", duration: 120 },
-        { id: "sk_2", text: "塗抹精華", duration: 60 },
-        { id: "sk_3", text: "等待吸收", duration: 900 },
-        { id: "sk_4", text: "後續保濕", duration: 60 },
-      ]}
-    ];
+var INIT_ROUTINES = [
+{id:“r1”,icon:“🧺”,label:“洗衣服”,period:“weekly”,weekdays:[“週六”],monthdays:[],month:null,lastDone:null},
+{id:“r2”,icon:“🗑️”,label:“倒垃圾”,period:“weekly”,weekdays:[“週三”],monthdays:[],month:null,lastDone:null},
+{id:“r3”,icon:“🧹”,label:“打掃”,period:“weekly”,weekdays:[“週六”],monthdays:[],month:null,lastDone:null},
+{id:“r4”,icon:“💳”,label:“繳費”,period:“monthly”,weekdays:[],monthdays:[5],month:null,lastDone:null},
+{id:“r5”,icon:“💊”,label:“補藥”,period:“monthly”,weekdays:[],monthdays:[1],month:null,lastDone:null}
+];
 
-    const INIT_DOPAMINE_MENU = [
-      { id: "d1", text: "喝一杯溫水", emoji: "💧" },
-      { id: "d2", text: "聽一首喜歡的歌", emoji: "🎵" },
-      { id: "d3", text: "站起來伸展 30 秒", emoji: "🤸" },
-      { id: "d4", text: "看窗外遠方", emoji: "🪟" },
-      { id: "d5", text: "看一部短篇動漫", emoji: "📺" }
-    ];
+var INIT_FOCUS = [
+{id:“f1”,icon:“🔋”,title:“極簡生存洗沐”,desc:“電力10%專用。有弄濕就算贏。”,energyLevel:1,steps:[
+{id:“s1”,text:“脫衣服進浴室”,duration:0},
+{id:“s2”,text:“重點部位清潔”,duration:120},
+{id:“s3”,text:“洗臉與刷牙”,duration:300}
+]},
+{id:“f2”,icon:“🚿”,title:“標準洗沐”,desc:“限制洗頭與保養時間，防止完美主義發作。”,energyLevel:2,steps:[
+{id:“s4”,text:“卸妝與洗臉”,duration:180},
+{id:“s5”,text:“洗頭”,duration:300},
+{id:“s6”,text:“洗澡”,duration:300}
+]},
+{id:“f3”,icon:“🌙”,title:“夜間護膚與刷牙”,desc:“整合電動牙刷與酸類保養吸收時間。”,energyLevel:2,steps:[
+{id:“s7”,text:“塗抹酸類精華”,duration:60},
+{id:“s8”,text:“電動刷牙 (等待吸收)”,duration:120},
+{id:“s9”,text:“後續乳液保濕”,duration:60}
+]},
+{id:“f4”,icon:“🧴”,title:“完整保養流程”,desc:“含果酸等待吸收時間。”,energyLevel:2,steps:[
+{id:“sk1”,text:“溫水洗臉”,duration:120},
+{id:“sk2”,text:“塗抹果酸/A酸精華”,duration:60},
+{id:“sk3”,text:“等待吸收（放鬆一下）”,duration:900},
+{id:“sk4”,text:“後續保濕乳液”,duration:60}
+]},
+{id:“f5”,icon:“🍱”,title:“快速備餐”,desc:“防呆備餐流程。”,energyLevel:2,steps:[
+{id:“mp1”,text:“打開冰箱選食材”,duration:120},
+{id:“mp2”,text:“簡單清洗”,duration:180},
+{id:“mp3”,text:“切塊”,duration:300},
+{id:“mp4”,text:“丟入氣炸鍋/微波爐”,duration:60},
+{id:“mp5”,text:“等待烹調”,duration:600},
+{id:“mp6”,text:“裝盤開吃！”,duration:0}
+]}
+];
 
-    /* ========== 工具函數 ========== */
-    const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
-    const formatTimeZh = (sec) => { const m = Math.floor(sec / 60), s = sec % 60; if (m > 0 && s > 0) return `${m}分${s}秒`; if (m > 0) return `${m}分鐘`; return `${s}秒`; };
-    const formatIntervalZh = (h) => { const n = Number(h); return n < 1 ? `每 ${n * 60} 分鐘` : `每 ${n} 小時`; };
-    const formatIntervalShort = (h) => { const n = Number(h); return n < 1 ? `每${n*60}分` : `每${n}h`; };
-    const genId = () => `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+/* ====== 自我照顧全螢幕 ====== */
+var SELFCARE = [
+{id:“sc1”,emoji:“🍽️”,label:“去吃飯”,title:“放下手邊的事，去吃飯”,sub:“你的大腦需要燃料”,color:”#d4952a”,bg:“linear-gradient(160deg,#fef3e2,#f5f1eb)”,
+msgs:[“餓著肚子的效率是零”,“吃飯不是浪費時間，是投資效率”,“你值得好好吃一頓”],
+mins:30,checks:[“站起來離開螢幕”,“去廚房或餐廳”,“好好吃完一餐”,“喝一杯水”]},
+{id:“sc2”,emoji:“🛏️”,label:“去睡覺”,title:“今天到此為止，去睡覺”,sub:“睡眠是大腦的重開機”,color:”#6a5a8a”,bg:“linear-gradient(160deg,#ede8f5,#f5f1eb)”,
+msgs:[“熬夜做的事明天要花兩倍時間修正”,“睡飽的你比現在的你強十倍”,“沒有什麼事重要到值得犧牲睡眠”],
+mins:15,checks:[“存檔目前的工作”,“關閉所有螢幕”,“刷牙洗臉”,“躺到床上”]},
+{id:“sc3”,emoji:“🏃”,label:“去運動”,title:“動起來！”,sub:“運動 20 分鐘 = 免費的多巴胺”,color:”#4a7a5a”,bg:“linear-gradient(160deg,#e8f2ec,#f5f1eb)”,
+msgs:[“運動完的你會感謝現在的你”,“只要 20 分鐘心情就會不一樣”,“動起來，卡住的腦袋也會開始動”],
+mins:5,checks:[“換上舒服的衣服”,“穿上鞋子”,“出門或打開運動影片”,“動起來！”]},
+{id:“sc4”,emoji:“☕”,label:“休息一下”,title:“暫停！你需要休息”,sub:“休息是為了走更長的路”,color:”#9a5a28”,bg:“linear-gradient(160deg,#f0e6d6,#f5f1eb)”,
+msgs:[“連續工作超過 90 分鐘效率會暴跌”,“休息不是偷懶，是策略”,“給大腦 10 分鐘假期”],
+mins:10,checks:[“站起來伸展”,“離開螢幕”,“喝一杯水”,“做幾個深呼吸”]}
+];
 
-    const emptyDraft = (period = "weekly") => ({ label: "", icon: "⭐", period, weekdays: period === "weekly" ? ["週一"] : [], monthdays: period === "monthly" ? [1] : [], month: period === "yearly" ? "1月" : null });
-    const emptyFocusDraft = () => ({ id: `f_${genId()}`, icon: "⏳", title: "", desc: "", energyLevel: 2, steps: [] });
+/* ====== 防拖延 ====== */
+var ANTI_TIPS = [
+“🎯 五分鐘法則：告訴自己只做 5 分鐘就好。”,
+“🔬 把它縮小：不是「整理房間」，而是「把桌上的杯子拿去洗」。”,
+“🎲 隨機開始：閉上眼睛隨便指一個任務。”,
+“👟 身體先動：先站起來，拿出工具，打開檔案。”,
+“🍅 設一個超短計時：2 分鐘就好。”,
+“📝 寫下第一步：把任務拆成最小的動作。”,
+“🏆 30% 就是滿分：完美主義是拖延的燃料。”,
+“🎵 放一首歌：在音樂結束之前，至少開始做一件事。”,
+“🤝 找人一起：開虛擬共事，有人陪就不難開始。”
+];
 
-    /* 連續天數計算 */
-    const calcStreak = (history) => {
-      if (!history) return 0;
-      let streak = 0; const d = new Date(); d.setHours(0,0,0,0);
-      while (true) {
-        const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-        if (history[key] && history[key] > 0) { streak++; d.setDate(d.getDate() - 1); } else break;
-      }
-      return streak;
-    };
+/* ====== 多巴胺菜單 ====== */
+var DOPAMINE = [
+{emoji:“🎵”,label:“聽一首喜歡的歌”,cat:“感官”,min:4},
+{emoji:“☀️”,label:“到窗邊曬太陽”,cat:“身體”,min:3},
+{emoji:“🐱”,label:“看可愛動物影片”,cat:“快樂”,min:5},
+{emoji:“🍵”,label:“泡一杯熱飲”,cat:“身體”,min:5},
+{emoji:“🌬️”,label:“深呼吸 5 次”,cat:“身體”,min:1},
+{emoji:“💬”,label:“傳訊息給朋友”,cat:“社交”,min:3},
+{emoji:“🎨”,label:“隨手塗鴉”,cat:“快樂”,min:5},
+{emoji:“🚶”,label:“走到門口再走回來”,cat:“身體”,min:2}
+];
 
-    /* 通知 */
-    const safeNotify = (title) => { try { if (typeof window !== "undefined" && "Notification" in window && window.Notification.permission === "granted") new window.Notification("⏰ " + title, { body: "ADHD 管理提醒" }); } catch (e) {} };
-    const safeRequestNotifPerm = () => { try { if (typeof window !== "undefined" && "Notification" in window && window.Notification.permission === "default") window.Notification.requestPermission(); } catch (e) {} };
+/* ====== 呼吸練習 ====== */
+var BREATHS = [
+{id:“box”,name:“方塊呼吸”,desc:“平衡焦慮，回到當下”,inS:4,holdS:4,outS:4,hold2S:4,cycles:4},
+{id:“478”,name:“4-7-8 呼吸”,desc:“快速放鬆，幫助入睡”,inS:4,holdS:7,outS:8,hold2S:0,cycles:4},
+{id:“calm”,name:“延長吐氣”,desc:“啟動副交感神經”,inS:4,holdS:0,outS:8,hold2S:0,cycles:6}
+];
 
-    /* ========== 資料持久化 ========== */
-    const DATA_KEY = "adhd_v14_clean_full";
-    const defaultData = {
-      anchor: "", deadlines: [], leaveTime: "", prepMinutes: 40, pendingItems: [], alarms: [], alarmPresets: INIT_ALARM_PRESETS,
-      routines: INIT_ROUTINES, focusTemplates: INIT_FOCUS_TEMPLATES, todayEnergy: 2, completedToday: [], completedHistory: {},
-      lastAutoGenDate: null, forgiveCount: 0, focusCompleted: 0, moodLog: {}, dopamineMenu: INIT_DOPAMINE_MENU
-    };
+/* ====== 溫柔推一把 ====== */
+var NUDGES = [
+“要不要先做最小的那一件？”,“設一個 5 分鐘定時器，只做 5 分鐘就好。”,
+“先站起來，倒杯水，再回來看看。”,“選一件你「最不討厭」的來做。”,
+“把任務拆得更小。小到覺得太簡單了。”,“做 30% 就算成功。完美不是目標。”,
+“播一首喜歡的歌，在音樂裡開始做。”,“不想做也沒關係。休息也是生產力。”,
+“試試看身體先動：先把工具拿出來。”,“你已經打開了這個 app，這就是進步。”
+];
 
-    const loadData = () => {
-      try {
-        let raw = localStorage.getItem(DATA_KEY);
-        if (!raw) return defaultData;
-        const p = JSON.parse(raw);
-        if (!p.routines) p.routines = INIT_ROUTINES;
-        if (!p.focusTemplates) p.focusTemplates = INIT_FOCUS_TEMPLATES;
-        if (!p.alarmPresets) p.alarmPresets = INIT_ALARM_PRESETS;
-        if (!p.dopamineMenu) p.dopamineMenu = INIT_DOPAMINE_MENU;
-        return { ...defaultData, ...p };
-      } catch (e) { return defaultData; }
-    };
-    const saveData = (d) => { try { localStorage.setItem(DATA_KEY, JSON.stringify(d)); } catch (e) {} };
+/* ====== 里程碑 ====== */
+var MILESTONES = [
+{count:1,emoji:“🌱”,title:“踏出第一步”,msg:“光是打開這個 app 就很棒了！”},
+{count:3,emoji:“🌿”,title:“暖身完成”,msg:“三件事！你正在進入狀態。”},
+{count:5,emoji:“🌳”,title:“超越自己”,msg:“五件事，你比想像中更有能力。”},
+{count:7,emoji:“🌟”,title:“閃耀時刻”,msg:“七件事！今天真的很了不起。”},
+{count:10,emoji:“👑”,title:“傳說級成就”,msg:“十件事？你根本就是超人！”}
+];
 
-    const getRoutinesForToday = (routines) => {
-      const now = new Date(); const jsDay = now.getDay(); const todayWD = JS_WEEKDAY_MAP[jsDay]; const todayDate = now.getDate(); const todayMonth = MONTHS[now.getMonth()];
-      return routines.filter(r => {
-        if (r.period === "daily") return true;
-        if (r.period === "weekly") return (r.weekdays || []).includes(todayWD);
-        if (r.period === "monthly") return (r.monthdays || []).includes(todayDate);
-        if (r.period === "yearly") return r.month === todayMonth;
-        return false;
-      });
-    };
+/* ====== 音效 ====== */
+var audioCtx = null;
+function initAudio() {
+try {
+if (!audioCtx) { var A = window.AudioContext || window.webkitAudioContext; if (A) audioCtx = new A(); }
+if (audioCtx && audioCtx.state === ‘suspended’) audioCtx.resume();
+} catch(e) {}
+}
+function playSound(type) {
+if (!audioCtx) return;
+try {
+var now = audioCtx.currentTime;
+function t(freq,start,dur,vol) {
+vol = vol || 0.4;
+var o = audioCtx.createOscillator(), g = audioCtx.createGain();
+o.connect(g); g.connect(audioCtx.destination);
+o.type = ‘sine’; o.frequency.value = freq;
+g.gain.setValueAtTime(0,start); g.gain.linearRampToValueAtTime(vol,start+0.04); g.gain.linearRampToValueAtTime(0,start+dur);
+o.start(start); o.stop(start+dur);
+}
+if (type===‘alarm’) { t(880,now,0.2); t(880,now+0.3,0.2); t(1046,now+0.6,0.4); }
+else if (type===‘complete’) { t(523,now,0.15,0.3); t(659,now+0.12,0.15,0.3); t(784,now+0.24,0.3,0.3); }
+else if (type===‘tick’) { t(660,now,0.08,0.15); }
+else if (type===‘milestone’) { t(523,now,0.12,0.3); t(659,now+0.1,0.12,0.3); t(784,now+0.2,0.12,0.3); t(1046,now+0.35,0.4,0.35); }
+else if (type===‘sakura’) { t(523,now,0.3,0.15); t(392,now+0.2,0.4,0.12); }
+} catch(e) {}
+}
 
-    /* ========== 樣式常數 ========== */
-    const st = {
-      app: { minHeight: "100vh", background: P.bg, fontFamily: "'Noto Sans TC', sans-serif", color: P.text, paddingBottom: 80 },
-      sec: { margin: "16px 14px 0", background: P.card, borderRadius: 16, border: `1px solid ${P.border}`, overflow: "hidden", animation: "fadeIn 0.3s ease-out" },
-      sH: { padding: "14px 18px 10px", borderBottom: `1px solid ${P.border}`, display: "flex", alignItems: "center", justifyContent: "space-between" },
-      sT: { fontSize: 13, fontWeight: 700, color: P.sub, letterSpacing: 1 },
-      sB: { padding: "14px 18px" },
-      inp: { width: "100%", border: `1px solid ${P.border}`, borderRadius: 10, padding: "10px 14px", fontSize: 15, background: P.bg, color: P.text, outline: "none", boxSizing: "border-box", transition: "border-color 0.2s" },
-      btn: { border: "none", borderRadius: 10, padding: "9px 18px", fontSize: 14, cursor: "pointer", transition: "all 0.15s ease" },
-      row: { display: "flex", gap: 8, alignItems: "center" },
-    };
+function safeNotify(title) { try { if (“Notification” in window && Notification.permission===“granted”) new Notification(“⏰ “+title); } catch(e) {} }
+function requestNotif() { try { if (“Notification” in window && Notification.permission===“default”) Notification.requestPermission(); } catch(e) {} }
 
-    /* ========== 小元件 ========== */
-    const DayBadge = ({ n }) => <span style={{ background: n < 0 || n <= 1 ? "#fbe9e2" : n <= 3 ? "#fef3e2" : P.tag, color: n < 0 || n <= 1 ? P.danger : n <= 3 ? P.orange : P.sub, borderRadius: 20, padding: "3px 10px", fontSize: 12, fontWeight: 700, whiteSpace: "nowrap" }}>{n < 0 ? `已過期 ${Math.abs(n)} 天` : n === 0 ? "今天截止！" : `${n} 天`}</span>;
+/* ====== 工具 ====== */
+function todayStr() { var d=new Date(); return d.getFullYear()+”-”+String(d.getMonth()+1).padStart(2,“0”)+”-”+String(d.getDate()).padStart(2,“0”); }
+function fmtTime(sec) { var m=Math.floor(sec/60),s=sec%60; if(m>0&&s>0)return m+“分”+s+“秒”; if(m>0)return m+“分鐘”; return s+“秒”; }
+function fmtClock(sec) { return String(Math.floor(sec/60)).padStart(2,“0”)+”:”+String(sec%60).padStart(2,“0”); }
+function fmtInterval(h) { var n=Number(h); return n<1?“每”+n*60+“分”:“每”+n+“h”; }
+function genId() { return Date.now()+”_”+Math.random().toString(36).substr(2,6); }
 
-    const PriBadge = ({ value, onChange }) => {
-      const [open, setOpen] = useState(false); const pv = PRIORITY[value] || PRIORITY.medium;
-      return (
-        <div style={{ position: "relative", display: "inline-block", flexShrink: 0 }}>
-          <button onClick={() => setOpen(!open)} style={{ ...st.btn, background: pv.bg, color: pv.color, padding: "5px 10px", fontSize: 12, fontWeight: 700, border: `1.5px solid ${pv.color}`, display: "flex", alignItems: "center", gap: 4 }}>{pv.emoji} {pv.label}</button>
-          {open && (
-            <div style={{ position: "absolute", bottom: "110%", left: 0, zIndex: 100, background: P.card, border: `1px solid ${P.border}`, borderRadius: 10, boxShadow: "0 -4px 20px rgba(0,0,0,0.12)", overflow: "hidden", minWidth: 90 }}>
-              {Object.entries(PRIORITY).map(([k, v]) => (
-                <button key={k} onClick={() => { onChange(k); setOpen(false); }} style={{ ...st.btn, display: "block", width: "100%", textAlign: "left", padding: "10px 14px", fontSize: 13, background: k === value ? v.bg : P.card, color: k === value ? v.color : P.text, borderRadius: 0 }}>{v.emoji} {v.label}</button>
-              ))}
-            </div>
-          )}
+function calcStreak(hist) {
+var dates = Object.keys(hist).filter(function(d){return hist[d]>0}).sort().reverse();
+if (!dates.length) return 0;
+var streak=0, today=new Date(); today.setHours(0,0,0,0);
+for (var i=0; i<dates.length; i++) {
+var p=dates[i].split(”-”), check=new Date(+p[0],+p[1]-1,+p[2]); check.setHours(0,0,0,0);
+var diff=Math.round((today-check)/86400000);
+if (diff===i||diff===i+1) streak++; else break;
+}
+return streak;
+}
+
+function getLast7(hist) {
+var result=[], today=new Date(); today.setHours(0,0,0,0);
+for (var i=6;i>=0;i–) {
+var d=new Date(today); d.setDate(d.getDate()-i);
+var key=d.getFullYear()+”-”+String(d.getMonth()+1).padStart(2,“0”)+”-”+String(d.getDate()).padStart(2,“0”);
+result.push({date:key,wd:[“日”,“一”,“二”,“三”,“四”,“五”,“六”][d.getDay()],count:hist[key]||0});
+}
+return result;
+}
+
+function getRoutinesToday(routines) {
+var now=new Date(), wd=JS_WD[now.getDay()], date=now.getDate(), month=MONTHS[now.getMonth()];
+return routines.filter(function(r){
+if(r.period===“daily”)return true; if(r.period===“weekly”)return(r.weekdays||[]).indexOf(wd)>=0;
+if(r.period===“monthly”)return(r.monthdays||[]).indexOf(date)>=0; if(r.period===“yearly”)return r.month===month; return false;
+});
+}
+
+/* ====== 資料 ====== */
+var DATA_KEY = “adhd_v15”;
+var defaultData = {
+anchor:””, deadlines:[], leaveTime:””, prepMinutes:40,
+pendingItems:[], alarms:[], alarmPresets:INIT_PRESETS,
+routines:INIT_ROUTINES, focusTemplates:INIT_FOCUS,
+todayEnergy:2, completedToday:[], completedHistory:{},
+lastAutoGenDate:null, totalCompleted:0, milestoneSeen:[],
+selfCareReminders:[], bodyDoubleMinutes:25,
+moodLog:[], forgiveCount:0, focusCompleted:0
+};
+
+function loadData() {
+try {
+var raw = localStorage.getItem(DATA_KEY);
+if (!raw) { var keys=[“adhd_v14”,“adhd_v13”,“adhd_v12”,“adhd_v11”]; for(var i=0;i<keys.length;i++){raw=localStorage.getItem(keys[i]);if(raw)break;} }
+if (!raw) return JSON.parse(JSON.stringify(defaultData));
+var p = JSON.parse(raw);
+var d = {};
+for (var k in defaultData) { d[k] = (p[k] !== undefined) ? p[k] : defaultData[k]; }
+if (!d.routines) d.routines = INIT_ROUTINES;
+if (!d.focusTemplates) d.focusTemplates = INIT_FOCUS;
+if (!d.alarmPresets) d.alarmPresets = INIT_PRESETS;
+return d;
+} catch(e) { return JSON.parse(JSON.stringify(defaultData)); }
+}
+function saveData(d) { try { localStorage.setItem(DATA_KEY,JSON.stringify(d)); } catch(e) {} }
+
+/* ====== 樣式 ====== */
+var S = {
+app:{minHeight:“100vh”,background:P.bg,fontFamily:”‘Noto Sans TC’,sans-serif”,color:P.text,paddingBottom:80},
+sec:{margin:“16px 14px 0”,background:P.card,borderRadius:16,border:“1px solid “+P.border,overflow:“hidden”,animation:“fadeIn .3s ease-out”},
+sH:{padding:“14px 18px 10px”,borderBottom:“1px solid “+P.border,display:“flex”,alignItems:“center”,justifyContent:“space-between”},
+sT:{fontSize:13,fontWeight:700,color:P.sub,letterSpacing:1},
+sB:{padding:“14px 18px”},
+inp:{width:“100%”,border:“1px solid “+P.border,borderRadius:10,padding:“10px 14px”,fontSize:15,background:P.bg,color:P.text,outline:“none”,boxSizing:“border-box”,fontFamily:“inherit”},
+btn:{border:“none”,borderRadius:10,padding:“9px 18px”,fontSize:14,cursor:“pointer”,fontFamily:“inherit”,transition:“all .15s ease”},
+row:{display:“flex”,gap:8,alignItems:“center”}
+};
+
+/* ====== 小元件 ====== */
+function DayBadge(props) {
+var n = props.n;
+var bg = n<0?”#fbe9e2”:n<=1?”#fbe9e2”:n<=3?”#fef3e2”:P.tag;
+var co = n<0?P.danger:n<=1?P.danger:n<=3?P.orange:P.sub;
+var txt = n<0?“已過期 “+Math.abs(n)+” 天”:n===0?“今天截止！”:n+” 天”;
+return <span style={{background:bg,color:co,borderRadius:20,padding:“3px 10px”,fontSize:12,fontWeight:700,whiteSpace:“nowrap”}}>{txt}</span>;
+}
+
+function PriBadge(props) {
+var val=props.value, onChange=props.onChange;
+var ref = useRef();
+var pv = PRIORITY[val] || PRIORITY.medium;
+var open = useState(false), isOpen=open[0], setOpen=open[1];
+useEffect(function(){ function h(e){if(ref.current&&!ref.current.contains(e.target))setOpen(false);} document.addEventListener(“mousedown”,h); return function(){document.removeEventListener(“mousedown”,h);}; },[]);
+return (
+
+<div ref={ref} style={{position:"relative",display:"inline-block",flexShrink:0}}>
+<button onClick={function(){setOpen(!isOpen)}} style={{...S.btn,background:pv.bg,color:pv.color,padding:"5px 10px",fontSize:12,fontWeight:700,border:"1.5px solid "+pv.color,display:"flex",alignItems:"center",gap:4,whiteSpace:"nowrap"}}>{pv.emoji} {pv.label} ▾</button>
+{isOpen && <div style={{position:"absolute",bottom:"110%",left:0,zIndex:100,background:P.card,border:"1px solid "+P.border,borderRadius:10,boxShadow:"0 -4px 20px rgba(0,0,0,.12)",overflow:"hidden",minWidth:90}}>
+{Object.keys(PRIORITY).map(function(k){ var v=PRIORITY[k]; return <button key={k} onClick={function(){onChange(k);setOpen(false);}} style={{...S.btn,display:"block",width:"100%",textAlign:"left",padding:"10px 14px",fontSize:13,background:k===val?v.bg:P.card,color:k===val?v.color:P.text,borderRadius:0,fontWeight:k===val?700:400}}>{v.emoji} {v.label}</button>; })}
+</div>}
+</div>
+);
+}
+
+function EnergyPicker(props) {
+return <div style={{display:“flex”,gap:8,alignItems:“center”,flexWrap:“wrap”}}>
+<span style={{fontSize:12,color:P.sub,fontWeight:500}}>今日電量：</span>
+{ENERGY.map(function(lv){return <button key={lv.value} onClick={function(){props.onChange(lv.value)}} style={{…S.btn,padding:“6px 14px”,fontSize:14,background:props.value===lv.value?lv.color:P.tag,color:props.value===lv.value?”#fff”:P.sub,border:“2px solid “+(props.value===lv.value?lv.color:“transparent”),borderRadius:20,fontWeight:600}}>{lv.emoji} {lv.label}</button>;})}
+
+  </div>;
+}
+
+/* ====== 里程碑慶祝 ====== */
+function MilestonePop(props) {
+var m = props.milestone;
+if (!m) return null;
+return <div style={{position:“fixed”,inset:0,zIndex:10000,background:“rgba(46,36,24,.85)”,display:“flex”,alignItems:“center”,justifyContent:“center”,backdropFilter:“blur(6px)”}} onClick={props.onClose}>
+
+<div style={{background:P.card,borderRadius:24,padding:"40px 32px",maxWidth:320,textAlign:"center",animation:"popIn .5s ease-out",boxShadow:"0 20px 60px rgba(0,0,0,.3)"}} onClick={function(e){e.stopPropagation();}}>
+<div style={{fontSize:72,animation:"starPop .6s ease-out",marginBottom:16}}>{m.emoji}</div>
+<div style={{fontSize:22,fontWeight:900,color:P.reward,fontFamily:"'Noto Serif TC',serif",marginBottom:8}}>{m.title}</div>
+<div style={{fontSize:15,color:P.sub,lineHeight:1.6,marginBottom:24}}>{m.msg}</div>
+<button onClick={props.onClose} style={{...S.btn,background:P.reward,color:"#fff",padding:"14px 40px",fontSize:16,fontWeight:700,borderRadius:30}}>太棒了！</button>
+</div>
+  </div>;
+}
+
+/* ====== 一鍵原諒 (簡化) ====== */
+function ForgiveOverlay(props) {
+useEffect(function(){ var t=setTimeout(props.onDone,2000); return function(){clearTimeout(t);}; },[]);
+if (!props.show) return null;
+return <div style={{position:“fixed”,inset:0,zIndex:9998,pointerEvents:“none”,display:“flex”,alignItems:“center”,justifyContent:“center”}}>
+
+<div style={{position:"absolute",inset:0,background:"rgba(252,228,236,.35)",animation:"fadeIn .3s ease-out"}}></div>
+<div style={{textAlign:"center",zIndex:1,animation:"fadeIn .5s ease-out"}}>
+<div style={{fontSize:48,marginBottom:8}}>🌸</div>
+<div style={{fontSize:22,fontWeight:700,color:P.sakura,fontFamily:"'Noto Serif TC',serif"}}>今天這樣就很好了</div>
+<div style={{fontSize:14,color:P.sub,marginTop:6}}>明天再說吧 🍃</div>
+</div>
+  </div>;
+}
+
+/* ====== 呼吸練習全螢幕 ====== */
+function BreathScreen(props) {
+var bp = props.pattern;
+var st1 = useState(“ready”), phase=st1[0], setPhase=st1[1];
+var st2 = useState(3), secs=st2[0], setSecs=st2[1];
+var st3 = useState(0), cycle=st3[0], setCycle=st3[1];
+
+useEffect(function(){
+if (phase===“ready”) { if(secs<=0){setPhase(“in”);setSecs(bp.inS);return;} var t=setTimeout(function(){setSecs(secs-1);},1000); return function(){clearTimeout(t);}; }
+if (phase===“done”) return;
+if (secs<=0) {
+if (phase===“in”) { if(bp.holdS>0){setPhase(“hold”);setSecs(bp.holdS);}else{setPhase(“out”);setSecs(bp.outS);} }
+else if (phase===“hold”) { setPhase(“out”); setSecs(bp.outS); }
+else if (phase===“out”) {
+if (bp.hold2S>0) { setPhase(“hold2”); setSecs(bp.hold2S); }
+else { var nx=cycle+1; if(nx>=bp.cycles){setPhase(“done”);playSound(“complete”);if(props.onComplete)props.onComplete();}else{setCycle(nx);setPhase(“in”);setSecs(bp.inS);} }
+}
+else if (phase===“hold2”) { var nx2=cycle+1; if(nx2>=bp.cycles){setPhase(“done”);playSound(“complete”);if(props.onComplete)props.onComplete();}else{setCycle(nx2);setPhase(“in”);setSecs(bp.inS);} }
+return;
+}
+var t2=setTimeout(function(){setSecs(secs-1);},1000); return function(){clearTimeout(t2);};
+},[phase,secs]);
+
+var labels={ready:“準備好了嗎？”,in:“吸氣”,hold:“屏住”,out:“吐氣”,hold2:“屏住”,done:“做得好！”};
+var colors={ready:P.sub,in:P.green,hold:P.orange,out:P.accent,hold2:P.orange,done:P.green};
+var anim=phase===“in”?“breatheIn”:phase===“out”?“breatheOut”:“breatheHold”;
+var dur=phase===“in”?bp.inS:phase===“hold”?bp.holdS:phase===“out”?bp.outS:phase===“hold2”?bp.hold2S:1;
+var col=colors[phase];
+
+return <div style={{…S.app,display:“flex”,flexDirection:“column”,alignItems:“center”,justifyContent:“center”,background:“linear-gradient(180deg,#e8f2ec,”+P.bg+”)”,padding:24}}>
+<button onClick={props.onClose} style={{position:“absolute”,top:50,left:16,background:“transparent”,border:“none”,color:P.sub,fontSize:15,cursor:“pointer”}}>✕ 離開</button>
+
+<div style={{fontSize:14,color:P.sub,marginBottom:8}}>{bp.name}</div>
+<div style={{fontSize:13,color:P.sub,marginBottom:40}}>第 {cycle+1} / {bp.cycles} 輪</div>
+<div style={{width:180,height:180,borderRadius:"50%",background:"radial-gradient(circle,"+col+"30,"+col+"10 70%,transparent)",display:"flex",alignItems:"center",justifyContent:"center",animation:phase!=="ready"&&phase!=="done"?anim+" "+dur+"s ease-in-out":"none"}}>
+<div style={{width:120,height:120,borderRadius:"50%",background:col+"20",border:"3px solid "+col,display:"flex",alignItems:"center",justifyContent:"center"}}>
+{phase!=="done"?<div style={{fontSize:36,fontWeight:900,color:col,fontFamily:"monospace"}}>{secs}</div>:<div style={{fontSize:40}}>🧘</div>}
+</div>
+</div>
+<div style={{fontSize:26,fontWeight:900,color:col,marginTop:36,fontFamily:"'Noto Serif TC',serif"}}>{labels[phase]}</div>
+{phase==="done"&&<div style={{marginTop:40,textAlign:"center"}}>
+<div style={{fontSize:15,color:P.sub,marginBottom:20}}>你剛剛給了大腦一個小假期</div>
+<button onClick={props.onClose} style={{...S.btn,background:P.green,color:"#fff",padding:"14px 40px",fontSize:16,fontWeight:700,borderRadius:30}}>回到現實</button>
+</div>}
+  </div>;
+}
+
+/* ====== 虛擬共事計時器 ====== */
+function BodyDoubleScreen(props) {
+var st1=useState(props.minutes*60), secs=st1[0], setSecs=st1[1];
+var st2=useState(true), running=st2[0], setRunning=st2[1];
+var st3=useState(false), done=st3[0], setDone=st3[1];
+var total=props.minutes*60;
+
+useEffect(function(){
+if(!running||done)return; if(secs<=0){setDone(true);playSound(“milestone”);return;}
+var t=setTimeout(function(){setSecs(secs-1);},1000); return function(){clearTimeout(t);};
+},[secs,running,done]);
+
+var msgs=[“你不是一個人在做。”,“專注在你的事就好。”,“一步一步來。”,“你正在做很棒的事。”];
+if(done) return <div style={{…S.app,display:“flex”,flexDirection:“column”,alignItems:“center”,justifyContent:“center”,padding:24,background:“linear-gradient(160deg,”+P.warmGlow+”,”+P.card+”)”}}>
+
+<div style={{fontSize:72,marginBottom:20,animation:"float 2s ease-in-out infinite"}}>🎊</div>
+<div style={{fontSize:28,fontWeight:900,color:P.accent,marginBottom:12,fontFamily:"'Noto Serif TC',serif"}}>共事時間結束！</div>
+<div style={{fontSize:16,color:P.sub,marginBottom:40}}>你專注了 {props.minutes} 分鐘，休息一下吧。</div>
+<button onClick={props.onClose} style={{...S.btn,background:P.accent,color:"#fff",padding:"16px 48px",fontSize:18,fontWeight:700,borderRadius:30}}>完成</button>
+  </div>;
+
+return <div style={{…S.app,display:“flex”,flexDirection:“column”,alignItems:“center”,justifyContent:“center”,padding:24,background:“linear-gradient(180deg,”+P.card+”,”+P.bg+”)”}}>
+<button onClick={function(){if(confirm(“確定離開？”))props.onClose();}} style={{position:“absolute”,top:50,left:16,background:“transparent”,border:“none”,color:P.sub,fontSize:15,cursor:“pointer”}}>✕ 離開</button>
+
+<div style={{fontSize:14,color:P.sub,marginBottom:4,letterSpacing:2}}>🧑‍💻 虛擬共事中</div>
+<div style={{fontSize:13,color:P.sub,marginBottom:40,opacity:.7}}>{msgs[Math.floor((total-secs)/60)%msgs.length]}</div>
+<div style={{fontSize:72,fontWeight:900,color:P.accent,fontFamily:"monospace",letterSpacing:4}}>{fmtClock(secs)}</div>
+<div style={{width:"80%",height:8,background:P.tag,borderRadius:4,overflow:"hidden",marginTop:30}}>
+<div style={{width:((total-secs)/total*100)+"%",height:"100%",background:"linear-gradient(90deg,"+P.accent+","+P.green+")",transition:"width 1s linear",borderRadius:4}}></div>
+</div>
+<div style={{marginTop:40,display:"flex",gap:16}}>
+<button onClick={function(){setRunning(!running);}} style={{...S.btn,background:P.tag,color:P.accent,width:60,height:60,borderRadius:30,fontSize:22,display:"flex",alignItems:"center",justifyContent:"center"}}>{running?"⏸":"▶️"}</button>
+<button onClick={function(){setSecs(0);}} style={{...S.btn,background:P.accent,color:"#fff",height:60,borderRadius:30,padding:"0 32px",fontSize:16,fontWeight:700}}>結束共事</button>
+</div>
+  </div>;
+}
+
+/* ====== 強制自我照顧全螢幕 ====== */
+function SelfCareScreen(props) {
+var preset=props.preset;
+var st1=useState(“intro”), phase=st1[0], setPhase=st1[1];
+var st2=useState(preset.mins*60), cd=st2[0], setCd=st2[1];
+var st3=useState(new Set()), checks=st3[0], setChecks=st3[1];
+var msgI = useRef(Math.floor(Math.random()*preset.msgs.length));
+var st4=useState(false), snoozed=st4[0], setSnoozed=st4[1];
+
+useEffect(function(){
+if(phase===“intro”){initAudio();playSound(“alarm”);var t=setInterval(function(){playSound(“alarm”);},8000);return function(){clearInterval(t);};}
+},[phase]);
+
+useEffect(function(){
+if(phase!==“countdown”)return; if(cd<=0){setPhase(“done”);playSound(“complete”);return;}
+var t=setTimeout(function(){setCd(cd-1);},1000); return function(){clearTimeout(t);};
+},[phase,cd]);
+
+if(phase===“done”) return <div style={{…S.app,display:“flex”,flexDirection:“column”,alignItems:“center”,justifyContent:“center”,padding:24,background:preset.bg}}>
+
+<div style={{fontSize:72,marginBottom:20,animation:"float 2s ease-in-out infinite"}}>{preset.emoji}</div>
+<div style={{fontSize:28,fontWeight:900,color:preset.color,marginBottom:12,fontFamily:"'Noto Serif TC',serif"}}>做得好！</div>
+<div style={{fontSize:16,color:P.sub,marginBottom:40,textAlign:"center",lineHeight:1.6}}>你成功照顧了自己<br/>這就是最棒的自律</div>
+<button onClick={props.onComplete} style={{...S.btn,background:preset.color,color:"#fff",padding:"16px 48px",fontSize:18,fontWeight:700,borderRadius:30}}>回到主畫面</button>
+  </div>;
+
+if(phase===“countdown”) return <div style={{…S.app,display:“flex”,flexDirection:“column”,alignItems:“center”,justifyContent:“center”,padding:24,background:preset.bg}}>
+
+<div style={{fontSize:64,marginBottom:20,animation:"float 2s ease-in-out infinite"}}>{preset.emoji}</div>
+<div style={{fontSize:20,fontWeight:900,color:preset.color,marginBottom:8,fontFamily:"'Noto Serif TC',serif"}}>{preset.title}</div>
+<div style={{fontSize:14,color:P.sub,marginBottom:30}}>計時中…安心去做吧</div>
+<div style={{fontSize:68,fontWeight:900,color:preset.color,fontFamily:"monospace",letterSpacing:4}}>{fmtClock(cd)}</div>
+<div style={{width:"75%",height:8,background:P.tag,borderRadius:4,overflow:"hidden",marginTop:24}}>
+<div style={{width:(cd/(preset.mins*60)*100)+"%",height:"100%",background:preset.color,transition:"width 1s linear",borderRadius:4}}></div>
+</div>
+<button onClick={function(){setCd(0);}} style={{...S.btn,background:preset.color,color:"#fff",padding:"14px 40px",fontSize:16,fontWeight:700,borderRadius:30,marginTop:40}}>我完成了！</button>
+  </div>;
+
+if(phase===“checklist”) return <div style={{…S.app,display:“flex”,flexDirection:“column”,padding:24,background:preset.bg}}>
+
+<div style={{textAlign:"center",paddingTop:40,marginBottom:30}}>
+<div style={{fontSize:48,marginBottom:12}}>{preset.emoji}</div>
+<div style={{fontSize:20,fontWeight:900,color:preset.color,fontFamily:"'Noto Serif TC',serif"}}>{preset.title}</div>
+</div>
+<div style={{background:P.card,borderRadius:16,padding:20,border:"1px solid "+P.border,marginBottom:20}}>
+<div style={{fontSize:13,color:P.sub,fontWeight:700,marginBottom:14}}>準備清單</div>
+{preset.checks.map(function(item,i){
+var dn=checks.has(i);
+return <button key={i} onClick={function(){var n=new Set(checks);if(dn)n.delete(i);else{n.add(i);playSound("tick");}setChecks(n);}}
+style={{display:"flex",alignItems:"center",gap:12,width:"100%",padding:"14px 16px",marginBottom:8,background:dn?preset.color+"15":P.bg,border:"2px solid "+(dn?preset.color:P.border),borderRadius:12,cursor:"pointer",textAlign:"left",fontFamily:"inherit",fontSize:15}}>
+<div style={{width:28,height:28,borderRadius:14,border:"2px solid "+(dn?preset.color:P.border),background:dn?preset.color:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+{dn&&<span style={{color:"#fff",fontSize:14,fontWeight:700}}>✓</span>}
+</div>
+<span style={{color:dn?preset.color:P.text,fontWeight:dn?600:400,textDecoration:dn?"line-through":"none"}}>{item}</span>
+</button>;
+})}
+</div>
+<button onClick={function(){setPhase("countdown");setCd(preset.mins*60);}} disabled={checks.size===0}
+style={{...S.btn,background:checks.size>0?preset.color:"#c8bfb5",color:"#fff",width:"100%",padding:"16px",fontSize:16,fontWeight:700,borderRadius:14}}>
+{checks.size===preset.checks.length?"全部完成！開始計時":"已完成 "+checks.size+" 項，開始計時"}
+</button>
+  </div>;
+
+// intro
+return <div style={{…S.app,display:“flex”,flexDirection:“column”,alignItems:“center”,justifyContent:“center”,padding:24,background:preset.bg,animation:“fadeIn .5s ease-out”}}>
+
+<div style={{fontSize:80,marginBottom:24,animation:"shake 1.5s ease-in-out infinite"}}>{preset.emoji}</div>
+<div style={{fontSize:28,fontWeight:900,color:preset.color,marginBottom:8,fontFamily:"'Noto Serif TC',serif",textAlign:"center",lineHeight:1.4}}>{preset.title}</div>
+<div style={{fontSize:16,color:P.sub,marginBottom:8,textAlign:"center"}}>{preset.sub}</div>
+<div style={{fontSize:15,color:preset.color,marginTop:12,marginBottom:40,textAlign:"center",fontStyle:"italic",padding:"0 20px",lineHeight:1.6,animation:"slowBreathe 4s ease-in-out infinite"}}>
+「{preset.msgs[msgI.current]}」</div>
+<div style={{display:"flex",flexDirection:"column",gap:12,width:"100%",maxWidth:320}}>
+<button onClick={function(){setPhase("checklist");}} style={{...S.btn,background:preset.color,color:"#fff",width:"100%",padding:"18px",fontSize:18,fontWeight:700,borderRadius:16,animation:"urgentPulse 2s ease-in-out infinite"}}>好，我現在就去 →</button>
+{!snoozed&&<button onClick={function(){setSnoozed(true);if(props.onSnooze)props.onSnooze();}} style={{...S.btn,background:"transparent",color:P.sub,width:"100%",padding:"12px",fontSize:14,border:"1px solid "+P.border,borderRadius:14}}>再給我 10 分鐘…</button>}
+{snoozed&&<div style={{textAlign:"center",fontSize:13,color:P.sub,padding:"8px",background:P.tag,borderRadius:10}}>⏰ 好的！10 分鐘後會再提醒你。</div>}
+</div>
+  </div>;
+}
+
+/* ====== 五分鐘啟動法全螢幕 ====== */
+function FiveMinScreen(props) {
+var st1=useState(300), secs=st1[0], setSecs=st1[1];
+var st2=useState(true), running=st2[0], setRunning=st2[1];
+var st3=useState(false), ext=st3[0], setExt=st3[1];
+var total = ext ? 600 : 300;
+
+useEffect(function(){
+if(!running)return; if(secs<=0){playSound(“complete”);return;}
+var t=setTimeout(function(){setSecs(secs-1);},1000); return function(){clearTimeout(t);};
+},[secs,running]);
+
+if(secs<=0) return <div style={{…S.app,display:“flex”,flexDirection:“column”,alignItems:“center”,justifyContent:“center”,padding:24,background:“linear-gradient(160deg,”+P.warmGlow+”,”+P.card+”)”}}>
+
+<div style={{fontSize:72,marginBottom:20,animation:"float 2s ease-in-out infinite"}}>🎉</div>
+<div style={{fontSize:28,fontWeight:900,color:P.accent,marginBottom:12,fontFamily:"'Noto Serif TC',serif"}}>五分鐘到了！</div>
+<div style={{fontSize:16,color:P.sub,marginBottom:8,textAlign:"center",lineHeight:1.6}}>{props.task?"你剛剛做了「"+props.task+"」":"你剛剛做了 "+(ext?10:5)+" 分鐘"}<br/>這就是最棒的開始！</div>
+<div style={{fontSize:14,color:P.green,marginBottom:40}}>想繼續嗎？停下來也完全沒問題。</div>
+<div style={{display:"flex",flexDirection:"column",gap:12,width:"100%",maxWidth:300}}>
+<button onClick={function(){setSecs(600);setExt(true);setRunning(true);}} style={{...S.btn,background:P.green,color:"#fff",width:"100%",padding:"16px",fontSize:16,fontWeight:700,borderRadius:14}}>💪 再 10 分鐘</button>
+<button onClick={props.onComplete} style={{...S.btn,background:P.accent,color:"#fff",width:"100%",padding:"16px",fontSize:16,fontWeight:700,borderRadius:14}}>✓ 很好！先到這裡</button>
+</div>
+  </div>;
+
+var encourage = secs>240?“才剛開始，你做得到的！”:secs>120?“已經過一半了，繼續！”:secs>30?“快到了！你超棒！”:“最後衝刺！”;
+return <div style={{…S.app,display:“flex”,flexDirection:“column”,alignItems:“center”,justifyContent:“center”,padding:24,background:“linear-gradient(180deg,”+P.card+”,”+P.bg+”)”}}>
+<button onClick={function(){if(confirm(“確定放棄？就差一點點了！”))props.onCancel();}} style={{position:“absolute”,top:50,left:16,background:“transparent”,border:“none”,color:P.sub,fontSize:15,cursor:“pointer”}}>✕ 離開</button>
+
+<div style={{fontSize:14,color:P.sub,marginBottom:4,fontWeight:600}}>⏱️ {ext?"延長模式":"五分鐘啟動法"}</div>
+{props.task&&<div style={{fontSize:16,fontWeight:700,color:P.accent,marginBottom:8,fontFamily:"'Noto Serif TC',serif"}}>{props.task}</div>}
+<div style={{fontSize:13,color:P.sub,marginBottom:40,textAlign:"center",lineHeight:1.5}}>只做 {ext?10:5} 分鐘就好。</div>
+<div style={{fontSize:72,fontWeight:900,color:P.accent,fontFamily:"monospace",letterSpacing:4}}>{fmtClock(secs)}</div>
+<div style={{width:"80%",height:8,background:P.tag,borderRadius:4,overflow:"hidden",marginTop:30}}>
+<div style={{width:(secs/total*100)+"%",height:"100%",background:"linear-gradient(90deg,"+P.green+","+P.accent+")",transition:"width 1s linear",borderRadius:4}}></div>
+</div>
+<div style={{marginTop:16,fontSize:13,color:P.sub}}>{encourage}</div>
+<div style={{marginTop:40,display:"flex",gap:16}}>
+<button onClick={function(){setRunning(!running);}} style={{...S.btn,background:P.tag,color:P.accent,width:60,height:60,borderRadius:30,fontSize:22,display:"flex",alignItems:"center",justifyContent:"center"}}>{running?"⏸":"▶️"}</button>
+<button onClick={function(){setSecs(0);}} style={{...S.btn,background:P.green,color:"#fff",height:60,borderRadius:30,padding:"0 32px",fontSize:16,fontWeight:700}}>我做完了！</button>
+</div>
+  </div>;
+}
+
+/* ====== 例行事項編輯欄位 ====== */
+function RoutineFields(props) {
+var d=props.draft, set=props.setDraft;
+function toggleWD(day){var cur=d.weekdays||[];set(Object.assign({},d,{weekdays:cur.indexOf(day)>=0?cur.filter(function(x){return x!==day;}):cur.concat(day)}));}
+function toggleMD(day){var cur=d.monthdays||[];set(Object.assign({},d,{monthdays:(cur.indexOf(day)>=0?cur.filter(function(x){return x!==day;}):cur.concat(day)).sort(function(a,b){return a-b;})}));}
+function changePeriod(p){set(Object.assign({},d,{period:p,weekdays:p===“weekly”?((d.weekdays&&d.weekdays.length)?d.weekdays:[“週一”]):[],monthdays:p===“monthly”?((d.monthdays&&d.monthdays.length)?d.monthdays:[1]):[],month:p===“yearly”?(d.month||“1月”):null}));}
+return <div>
+
+<div style={{marginBottom:10}}>
+<div style={{fontSize:12,color:P.sub,marginBottom:6}}>圖示</div>
+<div style={{display:"flex",flexWrap:"wrap",gap:5}}>{ICONS.map(function(ic){return <button key={ic} onClick={function(){set(Object.assign({},d,{icon:ic}));}} style={{...S.btn,padding:"5px 9px",fontSize:15,background:d.icon===ic?P.accent:P.card,color:d.icon===ic?"#fff":P.text,border:"1px solid "+(d.icon===ic?P.accent:P.border)}}>{ic}</button>;})}</div>
+</div>
+<div style={{...S.row,flexWrap:"wrap",gap:8,marginBottom:10}}>
+<input style={{...S.inp,flex:2,minWidth:120}} placeholder="事項名稱" value={d.label} onChange={function(e){set(Object.assign({},d,{label:e.target.value}));}} />
+<select style={{...S.inp,flex:1,minWidth:90}} value={d.period} onChange={function(e){changePeriod(e.target.value);}}>
+<option value="daily">每日</option><option value="weekly">每週</option><option value="monthly">每月</option><option value="yearly">每年</option>
+</select>
+</div>
+{d.period==="weekly"&&<div style={{marginBottom:10}}><div style={{fontSize:12,color:P.sub,marginBottom:6}}>哪幾天？</div><div style={{display:"flex",flexWrap:"wrap",gap:6}}>{WEEKDAYS.map(function(w){var sel=(d.weekdays||[]).indexOf(w)>=0;return <button key={w} onClick={function(){toggleWD(w);}} style={{...S.btn,padding:"6px 12px",fontSize:13,background:sel?P.accent:P.card,color:sel?"#fff":P.text,border:"1px solid "+(sel?P.accent:P.border),fontWeight:sel?700:400}}>{w}</button>;})}</div></div>}
+{d.period==="monthly"&&<div style={{marginBottom:10}}><div style={{fontSize:12,color:P.sub,marginBottom:6}}>每月幾號？</div><div style={{display:"flex",flexWrap:"wrap",gap:5}}>{MONTHDAYS.map(function(n){var sel=(d.monthdays||[]).indexOf(n)>=0;return <button key={n} onClick={function(){toggleMD(n);}} style={{...S.btn,padding:"5px 8px",fontSize:13,background:sel?P.accent:P.card,color:sel?"#fff":P.text,border:"1px solid "+(sel?P.accent:P.border),minWidth:36,fontWeight:sel?700:400}}>{n}</button>;})}</div></div>}
+{d.period==="yearly"&&<div style={{marginBottom:10}}><div style={{fontSize:12,color:P.sub,marginBottom:6}}>哪個月？</div><div style={{display:"flex",flexWrap:"wrap",gap:5}}>{MONTHS.map(function(m){var sel=d.month===m;return <button key={m} onClick={function(){set(Object.assign({},d,{month:m}));}} style={{...S.btn,padding:"6px 12px",fontSize:13,background:sel?P.accent:P.card,color:sel?"#fff":P.text,border:"1px solid "+(sel?P.accent:P.border),fontWeight:sel?700:400}}>{m}</button>;})}</div></div>}
+  </div>;
+}
+
+function scheduleHint(r) {
+if(r.period===“daily”)return”每日”; if(r.period===“weekly”)return”每週 “+(r.weekdays||[]).join(”、”);
+if(r.period===“monthly”)return”每月 “+(r.monthdays||[]).join(”、”)+” 號”; if(r.period===“yearly”)return”每年 “+(r.month||””); return””;
+}
+
+/* ============================================ */
+/* ====== 主應用 ====== */
+/* ============================================ */
+function App() {
+var _d = useState(loadData), data=_d[0], setData=_d[1];
+var _n = useState(new Date()), now=_n[0], setNow=_n[1];
+var _t = useState(“today”), tab=_t[0], setTab=_t[1];
+
+// Form states
+var _dl = useState({name:””,date:””}), newDL=_dl[0], setNewDL=_dl[1];
+var _pend = useState(””), newPending=_pend[0], setNewPending=_pend[1];
+var _alarm = useState({label:””,type:“fixed”,time:””,interval:1,start:“09:00”,end:“21:00”}), newAlarm=_alarm[0], setNewAlarm=_alarm[1];
+var _ep = useState(false), editPresetsMode=_ep[0], setEditPresetsMode=_ep[1];
+var _np = useState({label:””,type:“fixed”,time:””,interval:1,start:“09:00”,end:“21:00”}), newPreset=_np[0], setNewPreset=_np[1];
+var _nr = useState({label:””,icon:“⭐”,period:“weekly”,weekdays:[“週一”],monthdays:[],month:null}), newRoutine=_nr[0], setNewRoutine=_nr[1];
+var _srf = useState(false), showRoutineForm=_srf[0], setShowRoutineForm=_srf[1];
+var _eid = useState(null), editingId=_eid[0], setEditingId=_eid[1];
+var _ed = useState({}), editDraft=_ed[0], setEditDraft=_ed[1];
+var _ef = useState(null), editingFocus=_ef[0], setEditingFocus=_ef[1];
+var _fd = useState(null), focusDraft=_fd[0], setFocusDraft=_fd[1];
+
+// Active fullscreen states
+var _at = useState(null), activeTimer=_at[0], setActiveTimer=_at[1];
+var _tc = useState(null), timerCountdown=_tc[0], setTimerCountdown=_tc[1];
+var _ab = useState(null), activeBreath=_ab[0], setActiveBreath=_ab[1];
+var _abd = useState(null), activeBodyD=_abd[0], setActiveBodyD=_abd[1];
+var _asc = useState(null), activeSC=_asc[0], setActiveSC=_asc[1];
+var _a5 = useState(null), active5m=_a5[0], setActive5m=_a5[1];
+
+// UI states
+var _ban = useState(null), banner=_ban[0], setBanner=_ban[1];
+var _burst = useState(false), showBurst=_burst[0], setShowBurst=_burst[1];
+var _wb = useState(false), welcomeBack=_wb[0], setWelcomeBack=_wb[1];
+var _fg = useState(false), showForgive=_fg[0], setShowForgive=_fg[1];
+var _ms = useState(null), activeMilestone=_ms[0], setActiveMilestone=_ms[1];
+var _nudge = useState(null), nudgeText=_nudge[0], setNudgeText=_nudge[1];
+var _tip = useState(null), antiTip=_tip[0], setAntiTip=_tip[1];
+var _mf = useState(false), showMoodForm=_mf[0], setShowMoodForm=_mf[1];
+var _mn = useState(””), moodNote=_mn[0], setMoodNote=_mn[1];
+var _me = useState(“😊”), moodEmoji=_me[0], setMoodEmoji=_me[1];
+var _scSetup = useState(false), showSCSetup=_scSetup[0], setShowSCSetup=_scSetup[1];
+
+var firedRef = useRef({});
+var snoozedRef = useRef({});
+
+function upd(p) { setData(function(d) { var n = Object.assign({},d,p); return n; }); }
+
+// Clock
+useEffect(function(){ var t=setInterval(function(){setNow(new Date());},1000); return function(){clearInterval(t);}; },[]);
+// Save
+useEffect(function(){ saveData(data); },[data]);
+
+// Day change
+var lastDate = useRef(todayStr());
+useEffect(function(){
+var today=todayStr();
+if(today!==lastDate.current){ lastDate.current=today; firedRef.current={}; upd({completedToday:[],anchor:””}); }
+},[now]);
+
+// Auto-generate routines
+useEffect(function(){
+var today=todayStr(); if(data.lastAutoGenDate===today)return;
+var tR=getRoutinesToday(data.routines), ex={}; data.pendingItems.forEach(function(p){ex[p.text]=true;});
+var items=tR.filter(function(r){return !ex[r.label];}).map(function(r){return {id:genId(),text:r.label,priority:“medium”,fromRoutine:r.id};});
+upd({pendingItems:items.concat(data.pendingItems),lastAutoGenDate:today});
+},[]);
+
+// Welcome back
+useEffect(function(){
+var lv=localStorage.getItem(“adhd_lastVisit”), today=todayStr();
+if(lv&&lv!==today){setWelcomeBack(true);setTimeout(function(){setWelcomeBack(false);},4000);}
+localStorage.setItem(“adhd_lastVisit”,today);
+},[]);
+
+// Alarms
+useEffect(function(){
+var hh=String(now.getHours()).padStart(2,“0”), mm=String(now.getMinutes()).padStart(2,“0”), cur=hh+”:”+mm, dk=todayStr();
+(data.alarms||[]).forEach(function(a){
+var fk=dk+”*”+a.id+”*”+cur;
+if(a.enabled&&a.time===cur&&!firedRef.current[fk]){ firedRef.current[fk]=true; safeNotify(a.label); playSound(“alarm”); setBanner(a.label); setTimeout(function(){setBanner(null);},5000); }
+});
+// Self-care reminders
+(data.selfCareReminders||[]).forEach(function(r){
+if(!r.enabled)return; var fk=“sc_”+dk+”*”+r.id+”*”+cur;
+if(r.time===cur&&!firedRef.current[fk]){
+if(snoozedRef.current[r.presetId]&&Date.now()<snoozedRef.current[r.presetId])return;
+firedRef.current[fk]=true; var preset=SELFCARE.find(function(p){return p.id===r.presetId;});
+if(preset&&!activeSC&&!activeTimer&&!activeBreath&&!activeBodyD){initAudio();playSound(“alarm”);setActiveSC(preset);}
+}
+});
+},[now]);
+
+// Focus timer tick
+useEffect(function(){
+var t=setInterval(function(){
+setActiveTimer(function(prev){
+if(!prev||!prev.isRunning||prev.isFinished)return prev;
+var cs=prev.template.steps[prev.stepIndex]; if(cs.duration===0)return prev;
+if(prev.secondsLeft>1)return Object.assign({},prev,{secondsLeft:prev.secondsLeft-1});
+playSound(“alarm”); safeNotify(cs.text+” 時間到！”);
+var ni=prev.stepIndex+1;
+if(ni<prev.template.steps.length){var ns=prev.template.steps[ni];return Object.assign({},prev,{stepIndex:ni,secondsLeft:ns.duration,isRunning:ns.duration>0});}
+else{playSound(“complete”);return Object.assign({},prev,{isFinished:true,isRunning:false});}
+});
+},1000);
+return function(){clearInterval(t);};
+},[]);
+
+// – Derived –
+var timeStr = now.toLocaleTimeString(“zh-TW”,{hour:“2-digit”,minute:“2-digit”});
+var dateStr = now.toLocaleDateString(“zh-TW”,{month:“long”,day:“numeric”,weekday:“long”});
+var completedCount = (data.completedToday||[]).length;
+var streak = useMemo(function(){return calcStreak(data.completedHistory||{});},[data.completedHistory]);
+var last7 = useMemo(function(){return getLast7(data.completedHistory||{});},[data.completedHistory]);
+var maxL7 = Math.max.apply(null,last7.map(function(d){return d.count;}).concat([1]));
+var sortedPending = (data.pendingItems||[]).slice().sort(function(a,b){return SORT_ORDER[a.priority]-SORT_ORDER[b.priority];});
+var sortedDL = (data.deadlines||[]).slice().sort(function(a,b){return new Date(a.date)-new Date(b.date);});
+
+// – Helpers –
+function prepStart(){if(!data.leaveTime)return null;var p=data.leaveTime.split(”:”),h=+p[0],m=+p[1];var t=((h*60+m-(data.prepMinutes||0))%1440+1440)%1440;return String(Math.floor(t/60)).padStart(2,“0”)+”:”+String(t%60).padStart(2,“0”);}
+function minsToLeave(){if(!data.leaveTime)return null;var p=data.leaveTime.split(”:”),h=+p[0],m=+p[1];return h*60+m-(now.getHours()*60+now.getMinutes());}
+function leaveCD(){var d=minsToLeave();if(d===null)return null;if(d<0)return”已出發 ✓”;if(d===0)return”現在出門！”;return d>=60?Math.floor(d/60)+” 小時 “+d%60+” 分後出門”:d+” 分鐘後出門”;}
+function prepCD(){var ps=prepStart();if(!ps)return null;var pp=ps.split(”:”),diff=+pp[0]*60+ +pp[1]-(now.getHours()*60+now.getMinutes());var mtl=minsToLeave();if(diff<=0&&mtl!==null&&mtl>0)return”🔔 現在開始準備！”;if(diff>0)return diff+” 分鐘後開始準備”;return null;}
+var urgent = (function(){var d=minsToLeave();return d!==null&&d<=(data.prepMinutes||0)&&d>0;})();
+
+function daysLeft(ds){if(!ds)return null;var p=ds.split(”-”),target=new Date(+p[0],+p[1]-1,+p[2]),today=new Date();today.setHours(0,0,0,0);target.setHours(0,0,0,0);return Math.ceil((target-today)/86400000);}
+
+function addPending(text,priority){var t=(text||newPending).trim();if(!t)return;upd({pendingItems:data.pendingItems.concat([{id:genId(),text:t,priority:priority||“medium”}])});if(!text)setNewPending(””);}
+
+function completePending(id){
+var item=data.pendingItems.find(function(p){return p.id===id;});
+initAudio();playSound(“complete”);setShowBurst(true);setTimeout(function(){setShowBurst(false);},800);
+var today=todayStr(),hist=Object.assign({},data.completedHistory);hist[today]=(hist[today]||0)+1;
+var newTotal=(data.totalCompleted||0)+1;
+var newCT=data.completedToday.concat([{text:item?item.text:””,time:new Date().toLocaleTimeString(“zh-TW”,{hour:“2-digit”,minute:“2-digit”})}]);
+var todayCount=newCT.length;
+var routines=(item&&item.fromRoutine)?data.routines.map(function(r){return r.id===item.fromRoutine?Object.assign({},r,{lastDone:today}):r;}):data.routines;
+var base={pendingItems:data.pendingItems.filter(function(p){return p.id!==id;}),completedToday:newCT,completedHistory:hist,totalCompleted:newTotal,routines:routines};
+var milestone=MILESTONES.find(function(m){return m.count===todayCount;});
+if(milestone&&(data.milestoneSeen||[]).indexOf(today+”*”+todayCount)<0){
+setTimeout(function(){playSound(“milestone”);setActiveMilestone(milestone);},900);
+base.milestoneSeen=(data.milestoneSeen||[]).concat([today+”*”+todayCount]);
+}
+upd(base);
+}
+
+function forgiveItems(){
+var low=data.pendingItems.filter(function(p){return p.priority===“low”;});
+var items=low.length>0?low:data.pendingItems;
+if(!items.length)return;
+initAudio();playSound(“sakura”);setShowForgive(true);
+var ids={}; items.forEach(function(i){ids[i.id]=true;});
+upd({pendingItems:data.pendingItems.filter(function(p){return !ids[p.id];}),forgiveCount:(data.forgiveCount||0)+1});
+}
+
+// Alarm helpers
+function addAlarmFn(){
+if(!newAlarm.label.trim())return; requestNotif();
+var na=(data.alarms||[]).slice();
+if(newAlarm.type===“fixed”){
+if(!newAlarm.time)return;
+if(!na.some(function(a){return a.label===newAlarm.label&&a.time===newAlarm.time;}))na.push({id:genId(),label:newAlarm.label,time:newAlarm.time,enabled:true});
+} else {
+if(!newAlarm.interval||!newAlarm.start||!newAlarm.end)return;
+var ss=newAlarm.start.split(”:”),es=newAlarm.end.split(”:”);
+var cur=+ss[0]*60+ +ss[1], end=+es[0]*60+ +es[1], intM=Math.max(0.5,Number(newAlarm.interval))*60;
+while(cur<=end){
+var ts=String(Math.floor(cur/60)).padStart(2,“0”)+”:”+String(cur%60).padStart(2,“0”);
+if(!na.some(function(a){return a.label===newAlarm.label&&a.time===ts;}))na.push({id:genId(),label:newAlarm.label,time:ts,enabled:true});
+cur+=intM;
+}
+}
+upd({alarms:na});setNewAlarm({label:””,type:“fixed”,time:””,interval:1,start:“09:00”,end:“21:00”});
+}
+function applyPreset(preset){
+requestNotif();var na=(data.alarms||[]).slice();
+if(preset.type===“fixed”){if(!na.some(function(a){return a.label===preset.label&&a.time===preset.time;}))na.push({id:genId(),label:preset.label,time:preset.time,enabled:true});}
+else{var ss=preset.start.split(”:”),es=preset.end.split(”:”);var cur=+ss[0]*60+ +ss[1],end=+es[0]*60+ +es[1],intM=Math.max(0.5,Number(preset.interval))*60;
+while(cur<=end){var ts=String(Math.floor(cur/60)).padStart(2,“0”)+”:”+String(cur%60).padStart(2,“0”);if(!na.some(function(a){return a.label===preset.label&&a.time===ts;}))na.push({id:genId(),label:preset.label,time:ts,enabled:true});cur+=intM;}}
+upd({alarms:na});
+}
+
+// Focus timer
+function startFocus(tpl){if(!tpl.steps||!tpl.steps.length)return alert(“沒有步驟！”);initAudio();setTimerCountdown({template:tpl,count:3});}
+
+useEffect(function(){
+if(!timerCountdown)return;
+if(timerCountdown.count<=0){var tpl=timerCountdown.template;setActiveTimer({template:tpl,stepIndex:0,secondsLeft:tpl.steps[0].duration,isRunning:tpl.steps[0].duration>0,isFinished:false});setTimerCountdown(null);return;}
+var t=setTimeout(function(){playSound(“tick”);setTimerCountdown(Object.assign({},timerCountdown,{count:timerCountdown.count-1}));},1000);return function(){clearTimeout(t);};
+},[timerCountdown]);
+
+function skipStep(){
+setActiveTimer(function(prev){
+if(!prev)return prev;var ni=prev.stepIndex+1;
+if(ni<prev.template.steps.length){var ns=prev.template.steps[ni];return Object.assign({},prev,{stepIndex:ni,secondsLeft:ns.duration,isRunning:ns.duration>0});}
+else{playSound(“complete”);upd({focusCompleted:(data.focusCompleted||0)+1});return Object.assign({},prev,{isFinished:true,isRunning:false});}
+});
+}
+
+// Mood
+function saveMood(){upd({moodLog:data.moodLog.concat([{date:todayStr(),time:new Date().toLocaleTimeString(“zh-TW”,{hour:“2-digit”,minute:“2-digit”}),energy:data.todayEnergy,mood:moodEmoji,note:moodNote}])});setMoodNote(””);setShowMoodForm(false);}
+
+// ============ FULLSCREEN MODES ============
+if(activeSC) return <SelfCareScreen preset={activeSC}
+onComplete={function(){setActiveSC(null);}}
+onSnooze={function(){snoozedRef.current[activeSC.id]=Date.now()+600000;setActiveSC(null);}} />;
+if(active5m) return <FiveMinScreen task={active5m.task} onComplete={function(){setActive5m(null);}} onCancel={function(){setActive5m(null);}} />;
+if(activeBreath) return <BreathScreen pattern={activeBreath} onClose={function(){setActiveBreath(null);}} onComplete={function(){upd({focusCompleted:(data.focusCompleted||0)+1});}} />;
+if(activeBodyD) return <BodyDoubleScreen minutes={activeBodyD} onClose={function(){setActiveBodyD(null);}} />;
+
+if(timerCountdown) return <div style={{…S.app,display:“flex”,flexDirection:“column”,alignItems:“center”,justifyContent:“center”,background:“linear-gradient(160deg,”+P.warmGlow+”,”+P.bg+”)”}}>
+
+<div style={{fontSize:14,color:P.sub,marginBottom:24,fontWeight:500}}>{timerCountdown.template.title}</div>
+<div style={{fontSize:120,fontWeight:900,color:P.accent,fontFamily:"'Noto Serif TC',serif",animation:"pulse 1s ease-in-out infinite",lineHeight:1}}>{timerCountdown.count}</div>
+<div style={{fontSize:16,color:P.sub,marginTop:24}}>第一步：{timerCountdown.template.steps[0].text}</div>
+  </div>;
+
+if(activeTimer){
+if(activeTimer.isFinished) return <div style={{…S.app,display:“flex”,flexDirection:“column”,alignItems:“center”,justifyContent:“center”,padding:24,background:“linear-gradient(160deg,”+P.warmGlow+”,”+P.card+”)”}}>
+
+<div style={{fontSize:72,marginBottom:20,animation:"float 2s ease-in-out infinite"}}>🎉</div>
+<div style={{fontSize:28,fontWeight:900,color:P.accent,marginBottom:12,fontFamily:"'Noto Serif TC',serif"}}>太棒了！順利過關！</div>
+<div style={{fontSize:16,color:P.sub,marginBottom:40,textAlign:"center",lineHeight:1.6}}>「{activeTimer.template.title}」完成<br/>每一小步都是勝利</div>
+<button onClick={function(){setActiveTimer(null);}} style={{...S.btn,background:P.accent,color:"#fff",padding:"16px 48px",fontSize:18,fontWeight:700,borderRadius:30}}>完成返回</button>
+</div>;
+var cs=activeTimer.template.steps[activeTimer.stepIndex];
+var ns=activeTimer.template.steps[activeTimer.stepIndex+1];
+var tS=cs.duration, prog=tS>0?((tS-activeTimer.secondsLeft)/tS)*100:100;
+return <div style={{...S.app,padding:24,display:"flex",flexDirection:"column",background:"linear-gradient(180deg,"+P.card+","+P.bg+")"}}>
+<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:30,paddingTop:10}}>
+<button onClick={function(){if(confirm("確定放棄？"))setActiveTimer(null);}} style={{background:"transparent",border:"none",color:P.sub,fontSize:15,cursor:"pointer",padding:8}}>✕ 結束</button>
+<span style={{color:P.sub,fontSize:13,fontWeight:700}}>{activeTimer.template.icon} {activeTimer.stepIndex+1}/{activeTimer.template.steps.length}</span>
+</div>
+<div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+<div style={{fontSize:24,fontWeight:700,color:P.text,marginBottom:30,textAlign:"center",fontFamily:"'Noto Serif TC',serif"}}>{cs.text}</div>
+{cs.duration>0?<div style={{display:"flex",flexDirection:"column",alignItems:"center",width:"100%"}}>
+<div style={{fontSize:68,fontWeight:900,color:P.accent,fontFamily:"monospace",letterSpacing:4}}>{fmtClock(activeTimer.secondsLeft)}</div>
+<div style={{width:"75%",height:8,background:P.tag,borderRadius:4,overflow:"hidden",marginTop:24}}><div style={{width:prog+"%",height:"100%",background:"linear-gradient(90deg,"+P.accent+","+P.accentLight+")",transition:"width 1s linear",borderRadius:4}}></div></div>
+</div>:<div style={{width:"80%",padding:40,borderRadius:20,background:P.tag,textAlign:"center"}}><div style={{fontSize:17,color:P.sub,lineHeight:1.6}}>不限時<br/>完成後點「下一步」</div></div>}
+<div style={{marginTop:44,display:"flex",gap:16}}>
+{cs.duration>0&&<button onClick={function(){setActiveTimer(Object.assign({},activeTimer,{isRunning:!activeTimer.isRunning}));}} style={{...S.btn,background:P.tag,color:P.accent,width:60,height:60,borderRadius:30,fontSize:22,display:"flex",alignItems:"center",justifyContent:"center"}}>{activeTimer.isRunning?"⏸":"▶️"}</button>}
+<button onClick={skipStep} style={{...S.btn,background:P.accent,color:"#fff",height:60,borderRadius:30,padding:"0 36px",fontSize:17,fontWeight:700,display:"flex",alignItems:"center",gap:8}}>完成，下一步 ⏭</button>
+</div>
+{ns&&<div style={{marginTop:36,color:P.sub,fontSize:14,background:P.tag,padding:"10px 20px",borderRadius:20}}>👉 下一步：{ns.text} {ns.duration>0?"("+fmtTime(ns.duration)+")":"(不限時)"}</div>}
+</div>
+</div>;
+}
+
+// ============ MAIN UI ============
+return <div style={S.app}>
+{/* Overlays */}
+{showBurst&&<div style={{position:“fixed”,top:“40%”,left:“50%”,transform:“translate(-50%,-50%)”,zIndex:9999,pointerEvents:“none”}}>{[“🎉”,“✨”,“⭐”,“💪”,“🌟”].map(function(e,i){return <span key={i} style={{position:“absolute”,fontSize:28,animation:“confetti .8s ease-out forwards”,animationDelay:i*0.05+“s”,left:(i-2)*30+“px”}}>{e}</span>;})}</div>}
+<ForgiveOverlay show={showForgive} onDone={function(){setShowForgive(false);}} />
+<MilestonePop milestone={activeMilestone} onClose={function(){setActiveMilestone(null);}} />
+
+{welcomeBack&&<div style={{position:“fixed”,top:0,left:0,right:0,zIndex:999,background:“linear-gradient(135deg,”+P.accent+”,”+P.accentLight+”)”,color:”#fff”,padding:“calc(env(safe-area-inset-top,0px) + 16px) 20px 16px”,fontSize:17,textAlign:“center”,fontWeight:700,animation:“slideUp .4s ease-out”}}>歡迎回來！新的一天 ✨{streak>1&&<div style={{fontSize:13,marginTop:4,opacity:.9}}>🔥 連續 {streak} 天</div>}</div>}
+
+{banner&&!welcomeBack&&<div onClick={function(){setBanner(null);}} style={{position:“fixed”,top:0,left:0,right:0,zIndex:999,background:P.accent,color:”#fff”,padding:“calc(env(safe-area-inset-top,0px) + 14px) 20px 14px”,fontSize:16,textAlign:“center”,fontWeight:700,cursor:“pointer”}}>⏰ {banner}</div>}
+
+{nudgeText&&<div style={{position:“fixed”,bottom:80,left:“50%”,transform:“translateX(-50%)”,zIndex:998,background:P.accent,color:”#fff”,padding:“14px 24px”,borderRadius:20,fontSize:14,maxWidth:“85%”,textAlign:“center”,boxShadow:“0 8px 24px rgba(90,74,58,.3)”,animation:“slideUp .4s ease-out”,lineHeight:1.5}}>💛 {nudgeText}</div>}
+
+{/* Header */}
+
+<div style={{padding:"calc(env(safe-area-inset-top,0px) + 20px) 18px 14px",borderBottom:"1px solid "+P.border,background:"linear-gradient(180deg,"+P.card+","+P.bg+")"}}>
+  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+    <div>
+      <div style={{fontSize:24,fontWeight:900,letterSpacing:1,color:P.accent,fontFamily:"'Noto Serif TC',serif"}}>今日總覽</div>
+      <div style={{fontSize:13,color:P.sub,marginTop:4}}>{dateStr}</div>
+      {streak>0&&<div style={{fontSize:12,color:P.reward,fontWeight:700,marginTop:2}}>🔥 連續 {streak} 天</div>}
+    </div>
+    <div style={{textAlign:"right"}}>
+      <div style={{fontSize:28,fontWeight:700,color:P.accent,fontFamily:"monospace"}}>{timeStr}</div>
+      {completedCount>0&&<div style={{fontSize:12,color:P.green,fontWeight:600,marginTop:2}}>完成 {completedCount} 件 🎯</div>}
+    </div>
+  </div>
+  <div style={{display:"flex",gap:6,marginTop:14,overflowX:"auto",paddingBottom:4}}>
+    {[["today","📋 總覽"],["focus","⏳ 專注"],["selfcare","💛 照顧"],["routines","🔁 例行"],["alarms","⏰ 提醒"],["stats","📊 回顧"]].map(function(x){return <button key={x[0]} onClick={function(){setTab(x[0]);}} style={{...S.btn,padding:"8px 16px",fontSize:13,flexShrink:0,fontWeight:600,background:tab===x[0]?P.accent:"transparent",color:tab===x[0]?"#fff":P.sub,border:tab===x[0]?"none":"1px solid "+P.border}}>{x[1]}</button>;})}
+  </div>
+</div>
+
+{/* ========== 總覽 ========== */}
+{tab===“today”&&<div>
+
+  <div style={S.sec}><div style={S.sB}><EnergyPicker value={data.todayEnergy} onChange={function(v){upd({todayEnergy:v});}} /></div></div>
+
+{/* 強制放下 */}
+
+  <div style={S.sec}><div style={S.sH}><span style={S.sT}>🚨 強制放下</span><span style={{fontSize:12,color:P.sub}}>照顧自己優先</span></div>
+    <div style={S.sB}>
+      <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:12}}>
+        {SELFCARE.map(function(p){return <button key={p.id} onClick={function(){initAudio();setActiveSC(p);}} style={{...S.btn,flex:1,minWidth:70,padding:"12px 8px",fontSize:13,fontWeight:600,background:P.card,color:p.color,border:"2px solid "+p.color+"40",borderRadius:14,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}><span style={{fontSize:24}}>{p.emoji}</span>{p.label}</button>;})}
+      </div>
+      <button onClick={function(){setShowSCSetup(!showSCSetup);}} style={{...S.btn,width:"100%",background:P.tag,color:P.sub,fontSize:12,padding:"8px"}}>{showSCSetup?"收起":"⏰ 設定定時提醒"}</button>
+      {showSCSetup&&<div style={{marginTop:12,background:P.tag,borderRadius:12,padding:12}}>
+        <div style={{fontSize:12,color:P.sub,marginBottom:8}}>設定時間自動彈出全螢幕提醒</div>
+        {SELFCARE.map(function(p){
+          var existing=(data.selfCareReminders||[]).find(function(r){return r.presetId===p.id;});
+          return <div key={p.id} style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+            <span style={{fontSize:16}}>{p.emoji}</span><span style={{flex:1,fontSize:13}}>{p.label}</span>
+            {existing?<span style={{fontSize:13,fontFamily:"monospace",color:P.accent}}>{existing.time}</span>:null}
+            {existing?<button onClick={function(){upd({selfCareReminders:data.selfCareReminders.filter(function(r){return r.id!==existing.id;})});}} style={{...S.btn,background:"#fbe9e2",color:P.danger,padding:"4px 8px",fontSize:11}}>✕</button>:
+            <input type="time" style={{...S.inp,width:100,padding:"6px 8px",fontSize:13}} onChange={function(e){if(!e.target.value)return;upd({selfCareReminders:(data.selfCareReminders||[]).concat([{id:genId(),presetId:p.id,time:e.target.value,enabled:true}])});requestNotif();}} />}
+          </div>;
+        })}
+      </div>}
+    </div>
+  </div>
+
+{/* 防拖延 */}
+
+  <div style={S.sec}><div style={S.sH}><span style={S.sT}>🎯 防拖延</span>
+    <button onClick={function(){var t=ANTI_TIPS[Math.floor(Math.random()*ANTI_TIPS.length)];setAntiTip(t);setTimeout(function(){setAntiTip(null);},8000);}} style={{...S.btn,background:P.warmGlow,color:P.orange,padding:"5px 12px",fontSize:12,fontWeight:600,border:"1px solid "+P.orange+"30"}}>💡 給我一招</button></div>
+    <div style={S.sB}>
+      {antiTip&&<div style={{background:P.orange+"10",border:"1px solid "+P.orange+"30",borderRadius:12,padding:"12px 14px",marginBottom:12,fontSize:14,color:P.orange,lineHeight:1.5,animation:"fadeIn .3s ease-out"}}>{antiTip}</div>}
+      <button onClick={function(){initAudio();setActive5m({task:(sortedPending[0]&&sortedPending[0].text)||""});}} style={{...S.btn,width:"100%",background:"linear-gradient(135deg,"+P.accent+","+P.accentLight+")",color:"#fff",padding:"16px",fontSize:16,fontWeight:700,borderRadius:14}}>⏱️ 五分鐘啟動法 — 只做 5 分鐘就好</button>
+      <div style={{fontSize:12,color:P.sub,textAlign:"center",marginTop:6}}>通常一旦開始就停不下來 ✨</div>
+    </div>
+  </div>
+
+{/* 今日錨點 */}
+
+  <div style={S.sec}><div style={S.sH}><span style={S.sT}>⚓ 今日錨點</span></div>
+    <div style={S.sB}><input style={{...S.inp,fontSize:16,fontWeight:700,borderColor:data.anchor?P.accent:P.border}} placeholder="今天最重要的一件事？" value={data.anchor} onChange={function(e){upd({anchor:e.target.value});}} /></div>
+  </div>
+
+{/* 出門時間 */}
+
+  <div style={{...S.sec,border:urgent?"2px solid "+P.danger:"1px solid "+P.border}}>
+    <div style={S.sH}><span style={S.sT}>🚪 出門時間</span>{leaveCD()&&<span style={{fontSize:13,color:urgent?P.danger:P.green,fontWeight:700}}>{leaveCD()}</span>}</div>
+    <div style={S.sB}>
+      <input type="time" style={{...S.inp,maxWidth:160,marginBottom:10}} value={data.leaveTime} onChange={function(e){upd({leaveTime:e.target.value});}} />
+      <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10}}>
+        {[15,30,45,60].map(function(m){return <button key={m} onClick={function(){upd({prepMinutes:m});}} style={{...S.btn,padding:"6px 12px",fontSize:14,background:data.prepMinutes===m?P.accent:P.card,color:data.prepMinutes===m?"#fff":P.text,border:"1px solid "+(data.prepMinutes===m?P.accent:P.border)}}>{m} 分</button>;})}
+      </div>
+      {prepStart()&&<div style={{background:urgent?"#fbe9e2":P.tag,borderRadius:10,padding:"10px 14px",fontSize:14}}>準備：<strong style={{color:urgent?P.danger:P.accent}}>{prepStart()}</strong>{prepCD()&&<div style={{marginTop:4,fontSize:13,color:urgent?P.danger:P.sub}}>{prepCD()}</div>}</div>}
+    </div>
+  </div>
+
+{/* 截止倒數 */}
+
+  <div style={S.sec}><div style={S.sH}><span style={S.sT}>📅 截止倒數</span></div>
+    <div style={S.sB}>
+      <div style={{...S.row,marginBottom:12,flexWrap:"wrap"}}>
+        <input style={{...S.inp,flex:2,minWidth:100}} placeholder="事項" value={newDL.name} onChange={function(e){setNewDL({name:e.target.value,date:newDL.date});}} onKeyDown={function(e){if(e.key==="Enter"){if(newDL.name.trim()&&newDL.date){upd({deadlines:data.deadlines.concat([{id:genId(),name:newDL.name,date:newDL.date}])});setNewDL({name:"",date:""});}}}} />
+        <input type="date" style={{...S.inp,flex:1,minWidth:100}} value={newDL.date} onChange={function(e){setNewDL({name:newDL.name,date:e.target.value});}} />
+        <button style={{...S.btn,background:P.accent,color:"#fff"}} onClick={function(){if(newDL.name.trim()&&newDL.date){upd({deadlines:data.deadlines.concat([{id:genId(),name:newDL.name,date:newDL.date}])});setNewDL({name:"",date:""});}}}>新增</button>
+      </div>
+      {sortedDL.map(function(dl,i){return <div key={dl.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderTop:i>0?"1px solid "+P.border:"none"}}><div style={{flex:1,fontSize:15}}>{dl.name}</div><div style={{...S.row,gap:8}}><DayBadge n={daysLeft(dl.date)} /><button style={{...S.btn,background:"#fbe9e2",color:P.danger,padding:"5px 10px",fontSize:12}} onClick={function(){upd({deadlines:data.deadlines.filter(function(d){return d.id!==dl.id;})});}}>✕</button></div></div>;})}
+    </div>
+  </div>
+
+{/* 暫放區 */}
+
+  <div style={S.sec}><div style={S.sH}><span style={S.sT}>📦 暫放區</span>
+    <div style={{...S.row}}><button onClick={function(){var t=NUDGES[Math.floor(Math.random()*NUDGES.length)];setNudgeText(t);setTimeout(function(){setNudgeText(null);},6000);}} style={{...S.btn,background:P.warmGlow,color:P.orange,padding:"5px 12px",fontSize:12,fontWeight:600,border:"1px solid "+P.orange+"30"}}>🫂 卡住了？</button><span style={{fontSize:12,color:P.sub}}>{sortedPending.length} 項</span></div></div>
+    <div style={S.sB}>
+      <div style={{...S.row,marginBottom:14,gap:8}}>
+        <input style={{...S.inp,flex:1}} placeholder="腦中有什麼？Enter 丟入…" value={newPending} onChange={function(e){setNewPending(e.target.value);}} onKeyDown={function(e){if(e.key==="Enter")addPending();}} />
+        <button style={{...S.btn,background:P.accent,color:"#fff",padding:"10px 16px"}} onClick={function(){addPending();}}>丟入</button>
+      </div>
+      {sortedPending.map(function(item,i){return <div key={item.id} style={{display:"flex",alignItems:"center",gap:8,padding:"11px 0",borderTop:i>0?"1px solid "+P.border:"none"}}>
+        <PriBadge value={item.priority} onChange={function(v){upd({pendingItems:data.pendingItems.map(function(p){return p.id===item.id?Object.assign({},p,{priority:v}):p;})});}} />
+        <span style={{flex:1,fontSize:14}}>{item.text}</span>
+        <button onClick={function(){initAudio();setActive5m({task:item.text});}} style={{...S.btn,background:P.warmGlow,color:P.orange,padding:"6px 8px",fontSize:12,borderRadius:20,border:"1px solid "+P.orange+"30"}}>⏱️</button>
+        <button style={{...S.btn,background:P.green,color:"#fff",padding:"6px 14px",fontSize:13,fontWeight:600,borderRadius:20}} onClick={function(){completePending(item.id);}}>完成 ✓</button>
+      </div>;})}
+      {!sortedPending.length&&<div style={{textAlign:"center",padding:"20px 0",color:P.sub,fontSize:14}}>{completedCount>0?"今天已完成 "+completedCount+" 件！太厲害了 🌟":"沒有待處理的事項"}</div>}
+      {sortedPending.length>0&&<div style={{marginTop:12,paddingTop:12,borderTop:"1px solid "+P.border}}>
+        <button onClick={forgiveItems} style={{...S.btn,width:"100%",background:"linear-gradient(135deg,"+P.sakuraLight+","+P.warmGlow+")",color:P.sakura,border:"1.5px solid "+P.sakura,padding:"12px",fontSize:14,fontWeight:600,borderRadius:14}}>🌸 一鍵原諒 — 今天這樣就很好了</button>
+      </div>}
+    </div>
+  </div>
+
+{/* 今日已完成 */}
+{(data.completedToday||[]).length>0&&<div style={S.sec}><div style={S.sH}><span style={S.sT}>✅ 今日已完成</span><span style={{fontSize:13,color:P.green,fontWeight:700}}>{data.completedToday.length} 件</span></div>
+<div style={S.sB}>{data.completedToday.map(function(c,i){return <div key={i} style={{display:“flex”,alignItems:“center”,gap:10,padding:“8px 0”,borderTop:i>0?“1px solid “+P.border:“none”,opacity:.75}}><span style={{color:P.green}}>✓</span><span style={{flex:1,fontSize:14,textDecoration:“line-through”,color:P.sub}}>{c.text}</span><span style={{fontSize:12,color:P.sub}}>{c.time}</span></div>;})}</div>
+
+  </div>}
+</div>}
+
+{/* ========== 專注 ========== */}
+{tab===“focus”&&<div>
+{/* 虛擬共事 */}
+
+  <div style={S.sec}><div style={S.sH}><span style={S.sT}>🧑‍💻 虛擬共事</span></div>
+    <div style={S.sB}>
+      <div style={{color:P.sub,fontSize:13,marginBottom:12}}>模擬有人陪你一起做的感覺。</div>
+      <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:12}}>{[15,25,45,60].map(function(m){return <button key={m} onClick={function(){upd({bodyDoubleMinutes:m});}} style={{...S.btn,padding:"8px 18px",fontSize:14,background:data.bodyDoubleMinutes===m?P.accent:P.card,color:data.bodyDoubleMinutes===m?"#fff":P.text,border:"1px solid "+(data.bodyDoubleMinutes===m?P.accent:P.border),fontWeight:600}}>{m} 分鐘</button>;})}</div>
+      <button onClick={function(){initAudio();setActiveBodyD(data.bodyDoubleMinutes);}} style={{...S.btn,background:P.accent,color:"#fff",width:"100%",padding:"14px",fontSize:16,fontWeight:700,borderRadius:14}}>🚀 開始共事</button>
+    </div>
+  </div>
+
+{/* 步驟拆解定時器 */}
+{!editingFocus&&<div style={S.sec}>
+<div style={S.sH}><span style={S.sT}>⏳ 步驟拆解定時器</span><button onClick={function(){var nf={id:“f_”+genId(),icon:“⏳”,title:””,desc:””,energyLevel:2,steps:[]};setEditingFocus(nf.id);setFocusDraft(nf);}} style={{background:“transparent”,border:“none”,color:P.sub,fontSize:14,fontWeight:700,cursor:“pointer”}}>＋ 新增</button></div>
+<div style={S.sB}>
+<div style={{marginBottom:16}}><EnergyPicker value={data.todayEnergy} onChange={function(v){upd({todayEnergy:v});}} /></div>
+<div style={{display:“flex”,flexDirection:“column”,gap:12}}>
+{data.focusTemplates.map(function(tpl){
+var isR=(tpl.energyLevel||2)<=data.todayEnergy;
+return <div key={tpl.id} style={{display:“flex”,gap:10,alignItems:“stretch”,opacity:isR?1:.5}}>
+<div style={{flex:1,border:“2px solid “+(isR?P.accent+“40”:P.border),borderRadius:14,padding:16,display:“flex”,gap:14,background:P.card}}>
+<div style={{fontSize:32,display:“flex”,alignItems:“center”}}>{tpl.icon}</div>
+<div><div style={{fontWeight:700,fontSize:16,marginBottom:4,color:P.accent}}>{tpl.title} <span style={{fontSize:11,background:P.tag,padding:“2px 8px”,borderRadius:10,color:P.sub}}>{(ENERGY.find(function(e){return e.value===(tpl.energyLevel||2);})||{}).emoji}</span></div><div style={{color:P.sub,fontSize:13,lineHeight:1.4}}>{tpl.desc}</div></div>
+</div>
+<div style={{display:“flex”,flexDirection:“column”,gap:6,width:48}}>
+<button onClick={function(){startFocus(tpl);}} style={{flex:1.5,background:isR?P.accent:P.tag,color:isR?“white”:P.sub,border:“none”,borderRadius:10,fontSize:20,cursor:“pointer”,display:“flex”,alignItems:“center”,justifyContent:“center”}}>▶</button>
+<div style={{display:“flex”,gap:4,flex:1}}>
+<button onClick={function(){setEditingFocus(tpl.id);setFocusDraft(JSON.parse(JSON.stringify(tpl)));}} style={{flex:1,background:P.tag,border:“none”,borderRadius:8,fontSize:12,cursor:“pointer”,display:“flex”,alignItems:“center”,justifyContent:“center”}}>✏️</button>
+<button onClick={function(){upd({focusTemplates:data.focusTemplates.filter(function(t){return t.id!==tpl.id;})});}} style={{flex:1,background:”#fbe9e2”,border:“none”,borderRadius:8,fontSize:12,cursor:“pointer”,display:“flex”,alignItems:“center”,justifyContent:“center”}}>✕</button>
+</div>
+</div>
+</div>;
+})}
+</div>
+</div>
+
+  </div>}
+
+{/* 編輯器 */}
+{editingFocus&&focusDraft&&<div style={S.sec}>
+<div style={{…S.sH,borderBottom:“none”}}><span style={S.sT}>編輯模板</span><span style={{fontSize:13,color:P.sub}}>總計：{fmtTime(((focusDraft&&focusDraft.steps)||[]).reduce(function(s,x){return s+(parseInt(x.duration)||0);},0))}</span></div>
+<div style={S.sB}>
+<div style={{display:“flex”,gap:8,marginBottom:12}}>
+<input value={focusDraft.icon} onChange={function(e){setFocusDraft(Object.assign({},focusDraft,{icon:e.target.value}));}} style={{…S.inp,width:56,height:46,padding:0,textAlign:“center”,fontSize:22,background:P.tag}} maxLength=“2” />
+<input placeholder="模板名稱" value={focusDraft.title} onChange={function(e){setFocusDraft(Object.assign({},focusDraft,{title:e.target.value}));}} style={{...S.inp,flex:1,fontWeight:700,background:P.tag}} />
+</div>
+<input placeholder="描述" value={focusDraft.desc} onChange={function(e){setFocusDraft(Object.assign({},focusDraft,{desc:e.target.value}));}} style={{...S.inp,marginBottom:12,background:P.tag,fontSize:14}} />
+<div style={{marginBottom:16}}><div style={{fontSize:12,color:P.sub,marginBottom:6}}>能量等級</div><div style={{display:“flex”,gap:6}}>{ENERGY.map(function(lv){return <button key={lv.value} onClick={function(){setFocusDraft(Object.assign({},focusDraft,{energyLevel:lv.value}));}} style={{…S.btn,padding:“6px 14px”,fontSize:13,background:focusDraft.energyLevel===lv.value?lv.color:P.tag,color:focusDraft.energyLevel===lv.value?”#fff”:P.sub,borderRadius:20}}>{lv.emoji} {lv.label}</button>;})}</div></div>
+<div style={{fontSize:13,color:P.sub,fontWeight:700,marginBottom:10}}>步驟</div>
+{focusDraft.steps.map(function(step,idx){return <div key={step.id} style={{display:“flex”,alignItems:“center”,gap:8,background:P.tag,padding:“10px 12px”,borderRadius:12,marginBottom:8,flexWrap:“wrap”}}>
+<input placeholder=“步驟名稱” value={step.text} onChange={function(e){var steps=focusDraft.steps.slice();steps[idx]=Object.assign({},steps[idx],{text:e.target.value});setFocusDraft(Object.assign({},focusDraft,{steps:steps}));}} style={{…S.inp,flex:1,minWidth:120,padding:“8px 10px”,background:P.card}} />
+<div style={{display:“flex”,alignItems:“center”,background:P.card,borderRadius:8,border:“1px solid “+P.border,padding:“2px 8px”}}>
+<input type=“number” value={Math.floor(step.duration/60)} onChange={function(e){var steps=focusDraft.steps.slice();var v=parseInt(e.target.value)||0;if(v<0)v=0;steps[idx]=Object.assign({},steps[idx],{duration:v*60+steps[idx].duration%60});setFocusDraft(Object.assign({},focusDraft,{steps:steps}));}} style={{width:30,border:“none”,background:“transparent”,textAlign:“center”,fontSize:15,outline:“none”,padding:“6px 0”,color:P.text}} min=“0” /><span style={{fontSize:13,color:P.sub}}>分</span>
+<input type=“number” value={step.duration%60} onChange={function(e){var steps=focusDraft.steps.slice();var v=parseInt(e.target.value)||0;if(v<0)v=0;if(v>59)v=59;steps[idx]=Object.assign({},steps[idx],{duration:Math.floor(steps[idx].duration/60)*60+v});setFocusDraft(Object.assign({},focusDraft,{steps:steps}));}} style={{width:30,border:“none”,background:“transparent”,textAlign:“center”,fontSize:15,outline:“none”,padding:“6px 0”,color:P.text}} min=“0” max=“59” /><span style={{fontSize:13,color:P.sub}}>秒</span>
+</div>
+<button onClick={function(){var steps=focusDraft.steps.slice();steps.splice(idx,1);setFocusDraft(Object.assign({},focusDraft,{steps:steps}));}} style={{background:“transparent”,border:“none”,color:P.danger,fontSize:16,cursor:“pointer”}}>✕</button>
+</div>;})}
+<button onClick={function(){setFocusDraft(Object.assign({},focusDraft,{steps:focusDraft.steps.concat([{id:“s_”+genId(),text:””,duration:0}])}));}} style={{width:“100%”,border:“1.5px dashed “+P.sub,background:“transparent”,padding:“12px”,borderRadius:12,color:P.sub,fontSize:14,cursor:“pointer”,fontWeight:700}}>＋ 新增步驟</button>
+<div style={{display:“flex”,gap:12,marginTop:20}}>
+<button onClick={function(){if(!focusDraft.title.trim())return;var arr=data.focusTemplates.slice();var idx=arr.findIndex(function(t){return t.id===focusDraft.id;});if(idx>=0)arr[idx]=focusDraft;else arr.push(focusDraft);upd({focusTemplates:arr});setEditingFocus(null);setFocusDraft(null);}} style={{…S.btn,flex:1,background:P.accent,color:”#fff”,fontWeight:700,padding:“12px”}}>儲存</button>
+<button onClick={function(){setEditingFocus(null);setFocusDraft(null);}} style={{…S.btn,flex:1,background:P.tag,color:P.accent,padding:“12px”}}>取消</button>
+</div>
+</div>
+
+  </div>}
+</div>}
+
+{/* ========== 自我照顧 ========== */}
+{tab===“selfcare”&&<div>
+{/* 呼吸 */}
+
+  <div style={S.sec}><div style={S.sH}><span style={S.sT}>🫁 呼吸練習</span></div>
+    <div style={S.sB}>{BREATHS.map(function(bp){return <button key={bp.id} onClick={function(){initAudio();setActiveBreath(bp);}} style={{display:"flex",alignItems:"center",gap:14,padding:"14px 16px",width:"100%",marginBottom:8,background:P.card,border:"1.5px solid "+P.green+"30",borderRadius:14,cursor:"pointer",textAlign:"left",fontFamily:"inherit"}}>
+      <div style={{width:44,height:44,borderRadius:"50%",background:P.green+"15",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>🧘</div>
+      <div style={{flex:1}}><div style={{fontWeight:700,fontSize:15,color:P.text,marginBottom:2}}>{bp.name}</div><div style={{fontSize:12,color:P.sub}}>{bp.desc}</div></div>
+      <div style={{fontSize:12,color:P.green,fontWeight:600}}>{bp.cycles} 輪</div>
+    </button>;})}</div>
+  </div>
+
+{/* 多巴胺菜單 */}
+
+  <div style={S.sec}><div style={S.sH}><span style={S.sT}>🌈 多巴胺菜單</span></div>
+    <div style={S.sB}>
+      <div style={{color:P.sub,fontSize:13,marginBottom:14,lineHeight:1.5}}>低能量時，選一個健康的快樂來做。</div>
+      <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:12}}>
+        {DOPAMINE.map(function(item,i){return <button key={i} style={{...S.btn,background:P.warmGlow,color:P.text,border:"1px solid "+P.border,padding:"10px 14px",fontSize:13,borderRadius:12,display:"flex",alignItems:"center",gap:6}}><span style={{fontSize:18}}>{item.emoji}</span><div style={{textAlign:"left"}}><div>{item.label}</div><div style={{fontSize:11,color:P.sub}}>{item.min} 分鐘</div></div></button>;})}
+      </div>
+      <button onClick={function(){var r=DOPAMINE[Math.floor(Math.random()*DOPAMINE.length)];setNudgeText("試試看："+r.emoji+" "+r.label+"（"+r.min+" 分鐘）");setTimeout(function(){setNudgeText(null);},6000);}} style={{...S.btn,width:"100%",background:P.orange+"20",color:P.orange,padding:"14px",fontSize:14,fontWeight:700,borderRadius:14,border:"1px solid "+P.orange+"30"}}>🎲 隨機來一個！</button>
+    </div>
+  </div>
+
+{/* 心情記錄 */}
+
+  <div style={S.sec}><div style={S.sH}><span style={S.sT}>📝 心情記錄</span><button onClick={function(){setShowMoodForm(!showMoodForm);}} style={{...S.btn,background:showMoodForm?P.tag:P.accent,color:showMoodForm?P.accent:"#fff",padding:"6px 14px",fontSize:13}}>{showMoodForm?"取消":"＋ 記錄"}</button></div>
+    <div style={S.sB}>
+      {showMoodForm&&<div style={{background:P.tag,borderRadius:12,padding:14,marginBottom:16}}>
+        <div style={{fontSize:13,color:P.sub,marginBottom:8}}>現在感覺如何？</div>
+        <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}>
+          {["😊","😌","😐","😤","😢","😴","🥳","😰"].map(function(em){return <button key={em} onClick={function(){setMoodEmoji(em);}} style={{...S.btn,padding:"8px 12px",fontSize:22,background:moodEmoji===em?P.accent:P.card,borderRadius:12,border:"2px solid "+(moodEmoji===em?P.accent:"transparent")}}>{em}</button>;})}
         </div>
-      );
-    };
+        <textarea style={{...S.inp,height:60,resize:"none",marginBottom:10}} placeholder="想說什麼？（選填）" value={moodNote} onChange={function(e){setMoodNote(e.target.value);}} />
+        <button onClick={saveMood} style={{...S.btn,background:P.accent,color:"#fff",width:"100%",fontWeight:700}}>儲存</button>
+      </div>}
+      {data.moodLog.slice(-5).reverse().map(function(entry,i){return <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 0",borderTop:i>0?"1px solid "+P.border:"none"}}><span style={{fontSize:24}}>{entry.mood}</span><div style={{flex:1}}>{entry.note&&<div style={{fontSize:13,color:P.text}}>{entry.note}</div>}<div style={{fontSize:11,color:P.sub}}>{entry.date} {entry.time}</div></div></div>;})}
+      {!data.moodLog.length&&!showMoodForm&&<div style={{textAlign:"center",padding:"16px 0",color:P.sub,fontSize:13}}>還沒有記錄</div>}
+    </div>
+  </div>
+</div>}
 
-    const EnergyPicker = ({ value, onChange }) => (
-      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-        <span style={{ fontSize: 12, color: P.sub, fontWeight: 500 }}>今日電量：</span>
-        {ENERGY_LEVELS.map(lv => <button key={lv.value} onClick={() => onChange(lv.value)} style={{ ...st.btn, padding: "6px 14px", fontSize: 14, background: value === lv.value ? lv.color : P.tag, color: value === lv.value ? "#fff" : P.sub, borderRadius: 20, fontWeight: 600 }}>{lv.emoji} {lv.label}</button>)}
-      </div>
-    );
+{/* ========== 例行 ========== */}
+{tab===“routines”&&<div style={S.sec}>
 
-    const MoodPicker = ({ value, onChange }) => (
-      <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
-        <span style={{ fontSize: 12, color: P.sub, fontWeight: 500 }}>心情：</span>
-        {MOOD_OPTIONS.map(m => <button key={m.value} onClick={() => onChange(m.value)} style={{ ...st.btn, padding: "5px 12px", fontSize: 13, background: value === m.value ? m.color : P.tag, color: value === m.value ? "#fff" : P.sub, borderRadius: 20, fontWeight: 600 }}>{m.emoji} {m.label}</button>)}
-      </div>
-    );
+  <div style={S.sH}><span style={S.sT}>🔁 例行事項</span><button onClick={function(){setShowRoutineForm(!showRoutineForm);setEditingId(null);}} style={{...S.btn,background:showRoutineForm?P.tag:P.accent,color:showRoutineForm?P.accent:"#fff",padding:"6px 14px",fontSize:13}}>{showRoutineForm?"取消":"＋ 自訂"}</button></div>
+  <div style={S.sB}>
+    {showRoutineForm&&<div style={{background:P.tag,borderRadius:12,padding:14,marginBottom:18}}>
+      <RoutineFields draft={newRoutine} setDraft={setNewRoutine} />
+      <button onClick={function(){if(!newRoutine.label.trim())return;upd({routines:data.routines.concat([Object.assign({id:"c_"+genId(),lastDone:null},newRoutine)])});setNewRoutine({label:"",icon:"⭐",period:"weekly",weekdays:["週一"],monthdays:[],month:null});setShowRoutineForm(false);}} style={{...S.btn,background:newRoutine.label.trim()?P.accent:"#c8bfb5",color:"#fff",width:"100%",marginTop:4}}>確認新增</button>
+    </div>}
 
-    const MoodChart = ({ moodLog }) => {
-      const days = 7; const entries = []; const d = new Date();
-      for (let i = days - 1; i >= 0; i--) {
-        const dd = new Date(d); dd.setDate(dd.getDate() - i);
-        const key = `${dd.getFullYear()}-${String(dd.getMonth()+1).padStart(2,'0')}-${String(dd.getDate()).padStart(2,'0')}`;
-        const entry = moodLog[key]; entries.push({ date: `${dd.getMonth()+1}/${dd.getDate()}`, mood: entry?.mood || null, energy: entry?.energy || null });
-      }
-      const moodToY = (mood) => ({ great: 10, excited: 8, ok: 50, low: 75, anxious: 85 }[mood] ?? 50);
-      const energyToY = (e) => (e === 3 ? 15 : e === 2 ? 50 : 80);
+```
+{(function(){
+  var tR=getRoutinesToday(data.routines); if(!tR.length)return null;
+  return <div style={{marginBottom:20}}>
+    <div style={{fontSize:12,color:P.green,fontWeight:700,marginBottom:10}}>● 今日應做</div>
+    {tR.map(function(r){
+      var inP=data.pendingItems.some(function(p){return p.fromRoutine===r.id||p.text===r.label;});
+      var done=(data.completedToday||[]).some(function(c){return c.text===r.label;});
+      return <button key={r.id} onClick={function(){if(!inP&&!done)addPending(r.label,"medium");}} style={{...S.btn,width:"100%",display:"flex",alignItems:"center",gap:10,padding:"12px 16px",fontSize:14,justifyContent:"flex-start",textAlign:"left",marginBottom:8,background:done?P.green:inP?P.tag:P.card,color:done?"#fff":P.text,border:"1px solid "+(done?P.green:inP?P.accent:P.border),opacity:done?.7:1}}>
+        <span style={{fontSize:20}}>{r.icon}</span><div><div style={{fontWeight:600}}>{r.label}</div></div>
+        {done&&<span style={{marginLeft:"auto"}}>✓</span>}{inP&&!done&&<span style={{marginLeft:"auto",fontSize:12,color:P.accent}}>已排入</span>}
+      </button>;
+    })}
+  </div>;
+})()}
 
-      return (
-        <div style={{ background: P.tag, borderRadius: 12, padding: 14 }}>
-          <svg viewBox="0 0 280 100" style={{ width: "100%", height: 80 }}>
-            <line x1="0" y1="50" x2="280" y2="50" stroke={P.border} strokeWidth="0.5" strokeDasharray="4"/>
-            {entries.map((e, i) => (!e.mood || i === 0 || !entries[i-1].mood) ? null : <line key={`ml${i}`} x1={(i-1)*40+20} y1={moodToY(entries[i-1].mood)} x2={i*40+20} y2={moodToY(e.mood)} stroke={P.sakura} strokeWidth="2" opacity="0.8"/>)}
-            {entries.map((e, i) => (!e.energy || i === 0 || !entries[i-1].energy) ? null : <line key={`el${i}`} x1={(i-1)*40+20} y1={energyToY(entries[i-1].energy)} x2={i*40+20} y2={energyToY(e.energy)} stroke={P.accent} strokeWidth="2" opacity="0.6" strokeDasharray="4"/>)}
-            {entries.map((e, i) => e.mood && (
-              <g key={`md${i}`}><circle cx={i*40+20} cy={moodToY(e.mood)} r="6" fill={P.card} stroke={P.sakura} strokeWidth="2"/><text x={i*40+20} y={moodToY(e.mood)+4} textAnchor="middle" fontSize="8">{MOOD_OPTIONS.find(m=>m.value===e.mood)?.emoji}</text></g>
-            ))}
-            {entries.map((e, i) => <text key={`dt${i}`} x={i*40+20} y="98" textAnchor="middle" fontSize="8" fill={P.sub}>{e.date}</text>)}
-          </svg>
-          <div style={{ display: "flex", gap: 16, justifyContent: "center", marginTop: 6 }}><span style={{ fontSize: 11, color: P.sakura }}>● 心情</span><span style={{ fontSize: 11, color: P.accent }}>┄ 電量</span></div>
+{["daily","weekly","monthly","yearly"].map(function(period){
+  var items=data.routines.filter(function(r){return r.period===period;});
+  if(!items.length)return null;
+  return <div key={period} style={{marginBottom:20}}>
+    <div style={{fontSize:12,color:P.sub,fontWeight:700,marginBottom:10}}>{PERIOD_LABEL[period]}</div>
+    {items.map(function(r){
+      if(editingId===r.id) return <div key={r.id} style={{background:P.tag,borderRadius:12,padding:12,marginBottom:8}}>
+        <RoutineFields draft={editDraft} setDraft={setEditDraft} />
+        <div style={{...S.row,gap:8,marginTop:8}}>
+          <button onClick={function(){if(!editDraft.label.trim())return;upd({routines:data.routines.map(function(x){return x.id===r.id?Object.assign({},x,editDraft):x;})});setEditingId(null);}} style={{...S.btn,background:P.accent,color:"#fff",flex:1}}>儲存</button>
+          <button onClick={function(){setEditingId(null);}} style={{...S.btn,background:P.tag,color:P.accent,flex:1}}>取消</button>
         </div>
-      );
-    };
-
-    const BodyDoubling = ({ enabled, focuserCount }) => enabled && (
-      <div style={{ display: "flex", alignItems: "center", gap: 10, background: P.tag, borderRadius: 20, padding: "8px 16px", fontSize: 13, color: P.sub }}>
-        <span style={{ fontSize: 18, animation: "writing 1.5s ease-in-out infinite" }}>✍️</span>
-        <span>目前有 <strong style={{ color: P.accent }}>{focuserCount.toLocaleString()}</strong> 人正在和你一起專注</span>
-      </div>
-    );
-
-    const RoutineFields = ({ draft, setDraft }) => {
-      const toggleWD = (day) => { const cur = draft.weekdays || []; setDraft(d => ({ ...d, weekdays: cur.includes(day) ? cur.filter(x => x !== day) : [...cur, day] })); };
-      const toggleMD = (day) => { const cur = draft.monthdays || []; setDraft(d => ({ ...d, monthdays: (cur.includes(day) ? cur.filter(x => x !== day) : [...cur, day]).sort((a,b)=>a-b) })); };
-      const changePeriod = (p) => setDraft(d => ({ ...d, period: p, weekdays: p === "weekly" ? (d.weekdays?.length ? d.weekdays : ["週一"]) : [], monthdays: p === "monthly" ? (d.monthdays?.length ? d.monthdays : [1]) : [], month: p === "yearly" ? (d.month || "1月") : null }));
-      return (
-        <div>
-          <div style={{ marginBottom: 10 }}>
-            <div style={{ fontSize: 12, color: P.sub, marginBottom: 6 }}>圖示</div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
-              {ICONS.map(ic => <button key={ic} onClick={() => setDraft(d => ({ ...d, icon: ic }))} style={{ ...st.btn, padding: "5px 9px", fontSize: 15, background: draft.icon === ic ? P.accent : P.card, color: draft.icon === ic ? "#fff" : P.text, border: `1px solid ${draft.icon === ic ? P.accent : P.border}` }}>{ic}</button>)}
-            </div>
-          </div>
-          <div style={{ ...st.row, flexWrap: "wrap", gap: 8, marginBottom: 10 }}>
-            <input style={{ ...st.inp, flex: 2, minWidth: 120 }} placeholder="事項名稱" value={draft.label} onChange={e => setDraft(d => ({ ...d, label: e.target.value }))} />
-            <select style={{ ...st.inp, flex: 1, minWidth: 90 }} value={draft.period} onChange={e => changePeriod(e.target.value)}>
-              <option value="daily">每日</option><option value="weekly">每週</option><option value="monthly">每月</option><option value="yearly">每年</option>
-            </select>
-          </div>
-          {draft.period === "weekly" && (
-            <div style={{ marginBottom: 10 }}><div style={{ fontSize: 12, color: P.sub, marginBottom: 6 }}>哪幾天？（可複選）</div><div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>{WEEKDAYS.map(d => { const sel = (draft.weekdays || []).includes(d); return <button key={d} onClick={() => toggleWD(d)} style={{ ...st.btn, padding: "6px 12px", fontSize: 13, background: sel ? P.accent : P.card, color: sel ? "#fff" : P.text, border: `1px solid ${sel ? P.accent : P.border}`, fontWeight: sel ? 700 : 400 }}>{d}</button>; })}</div></div>
-          )}
-          {draft.period === "monthly" && (
-            <div style={{ marginBottom: 10 }}><div style={{ fontSize: 12, color: P.sub, marginBottom: 6 }}>每月幾號？（可複選）</div><div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>{MONTHDAYS.map(n => { const sel = (draft.monthdays || []).includes(n); return <button key={n} onClick={() => toggleMD(n)} style={{ ...st.btn, padding: "5px 8px", fontSize: 13, background: sel ? P.accent : P.card, color: sel ? "#fff" : P.text, border: `1px solid ${sel ? P.accent : P.border}`, minWidth: 36, fontWeight: sel ? 700 : 400 }}>{n}</button>; })}</div></div>
-          )}
-          {draft.period === "yearly" && (
-            <div style={{ marginBottom: 10 }}><div style={{ fontSize: 12, color: P.sub, marginBottom: 6 }}>哪個月？</div><div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>{MONTHS.map(m => { const sel = draft.month === m; return <button key={m} onClick={() => setDraft(d => ({ ...d, month: m }))} style={{ ...st.btn, padding: "6px 12px", fontSize: 13, background: sel ? P.accent : P.card, color: sel ? "#fff" : P.text, border: `1px solid ${sel ? P.accent : P.border}`, fontWeight: sel ? 700 : 400 }}>{m}</button>; })}</div></div>
-          )}
+      </div>;
+      return <div key={r.id} style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+        <div style={{flex:1,display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:P.card,border:"1px solid "+P.border,borderRadius:12}}>
+          <span style={{fontSize:20}}>{r.icon}</span><div><div style={{fontSize:14,fontWeight:600}}>{r.label}</div><div style={{fontSize:11,color:P.sub,marginTop:2}}>{scheduleHint(r)}</div></div>
         </div>
-      );
-    };
+        <button onClick={function(){setEditingId(r.id);setEditDraft({label:r.label,icon:r.icon,period:r.period,weekdays:r.weekdays||[],monthdays:r.monthdays||[],month:r.month||null});}} style={{...S.btn,background:P.tag,color:P.accent,padding:"8px 11px",fontSize:13}}>✏️</button>
+        <button onClick={function(){upd({routines:data.routines.filter(function(x){return x.id!==r.id;})});}} style={{...S.btn,background:"#fbe9e2",color:P.danger,padding:"8px 11px",fontSize:13}}>✕</button>
+      </div>;
+    })}
+  </div>;
+})}
+```
 
-    const CompletionBurst = ({ show }) => show ? (
-      <div style={{ position: "fixed", top: "40%", left: "50%", transform: "translate(-50%, -50%)", zIndex: 9999, pointerEvents: "none" }}>
-        {["🎉", "✨", "⭐", "💪", "🌟"].map((e, i) => <span key={i} style={{ position: "absolute", fontSize: 28, animation: `confettiBurst 0.8s ease-out forwards`, animationDelay: `${i * 0.05}s`, left: `${(i - 2) * 30}px`, top: `${Math.random() * 20 - 10}px` }}>{e}</span>)}
-      </div>
-    ) : null;
+  </div>
+</div>}
 
-    /* ========== 主應用元件 ========== */
-    const App = () => {
-      const [data, setData] = useState(loadData);
-      const [now, setNow] = useState(new Date());
-      const [tab, setTab] = useState("today");
-      
-      const [newDL, setNewDL] = useState({ name: "", date: "" });
-      const [newPending, setNewPending] = useState("");
-      
-      const [newAlarm, setNewAlarm] = useState({ label: "", type: "fixed", time: "", interval: 1, start: "09:00", end: "21:00" });
-      const [editPresetsMode, setEditPresetsMode] = useState(false);
-      const [newPreset, setNewPreset] = useState({ label: "", type: "fixed", time: "", interval: 1, start: "09:00", end: "21:00" });
-      const [firedAlarmsRef] = useState(() => new Set());
-      const [banner, setBanner] = useState(null);
-      
-      const [newRoutine, setNewRoutine] = useState(emptyDraft("weekly"));
-      const [showRoutineForm, setShowRoutineForm] = useState(false);
-      const [editingId, setEditingId] = useState(null);
-      const [editDraft, setEditDraft] = useState({});
-      
-      const [editingFocus, setEditingFocus] = useState(null);
-      const [focusDraft, setFocusDraft] = useState(null);
-      const [activeTimer, setActiveTimer] = useState(null);
-      
-      const [fiveMinTimer, setFiveMinTimer] = useState(null);
-      const [forceDropMode, setForceDropMode] = useState(false);
-      const [breathingMode, setBreathingMode] = useState(false);
-      const [showForgiveMsg, setShowForgiveMsg] = useState(false);
-      const [showBurst, setShowBurst] = useState(false);
-      
-      const [bodyDoublingEnabled, setBodyDoublingEnabled] = useState(false);
-      const [focuserCount] = useState(() => 800 + Math.floor(Math.random() * 600));
+{/* ========== 提醒 ========== */}
+{tab===“alarms”&&<div style={S.sec}>
 
-      useEffect(() => { const t = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(t); }, []);
-      useEffect(() => { saveData(data); }, [data]);
+  <div style={S.sH}><span style={S.sT}>⏰ 提醒設定</span></div>
+  <div style={S.sB}>
+    <div style={{background:P.tag,borderRadius:10,padding:"10px 14px",fontSize:13,color:P.sub,marginBottom:16}}>⚠️ 需要瀏覽器通知權限，且頁面保持開啟。</div>
+    <div style={{...S.row,marginBottom:8,flexWrap:"wrap",gap:8}}>
+      <input style={{...S.inp,flex:2,minWidth:120}} placeholder="提醒名稱" value={newAlarm.label} onChange={function(e){setNewAlarm(Object.assign({},newAlarm,{label:e.target.value}));}} />
+      <select style={{...S.inp,flex:1,minWidth:100}} value={newAlarm.type} onChange={function(e){setNewAlarm(Object.assign({},newAlarm,{type:e.target.value}));}}><option value="fixed">單次</option><option value="interval">間隔</option></select>
+    </div>
+    {newAlarm.type==="fixed"?<div style={{...S.row,gap:8}}><input type="time" style={{...S.inp,flex:1}} value={newAlarm.time} onChange={function(e){setNewAlarm(Object.assign({},newAlarm,{time:e.target.value}));}} /><button style={{...S.btn,background:P.accent,color:"#fff"}} onClick={addAlarmFn}>+ 新增</button></div>
+    :<div style={{background:P.card,border:"1px solid "+P.border,borderRadius:10,padding:12}}>
+      <div style={{...S.row,gap:4,marginBottom:8}}>每<input type="number" step="0.5" min="0.5" style={{...S.inp,padding:"6px",width:60,textAlign:"center"}} value={newAlarm.interval} onChange={function(e){setNewAlarm(Object.assign({},newAlarm,{interval:e.target.value}));}} />小時</div>
+      <div style={{...S.row,gap:6,marginBottom:8}}><input type="time" style={{...S.inp,padding:"8px",flex:1}} value={newAlarm.start} onChange={function(e){setNewAlarm(Object.assign({},newAlarm,{start:e.target.value}));}} /><span style={{color:P.sub}}>到</span><input type="time" style={{...S.inp,padding:"8px",flex:1}} value={newAlarm.end} onChange={function(e){setNewAlarm(Object.assign({},newAlarm,{end:e.target.value}));}} /></div>
+      <button style={{...S.btn,background:P.accent,color:"#fff",width:"100%",padding:"8px"}} onClick={addAlarmFn}>批次新增</button>
+    </div>}
+    <div style={{marginTop:16,marginBottom:16}}>
+      <div style={{fontSize:12,color:P.sub,marginBottom:8}}>常用快捷</div>
+      <div style={{display:"flex",flexWrap:"wrap",gap:8}}>{(data.alarmPresets||[]).map(function(p){return <button key={p.id} onClick={function(){applyPreset(p);}} style={{...S.btn,background:P.card,color:P.accent,border:"1px solid "+P.border,fontSize:13,padding:"7px 14px"}}>＋ {p.label}</button>;})}</div>
+    </div>
+    {(data.alarms||[]).length>0&&<div style={{borderTop:"1px solid "+P.border,paddingTop:16}}>
+      <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}><span style={{fontSize:12,color:P.sub}}>已排定 ({data.alarms.length})</span><button onClick={function(){upd({alarms:[]});}} style={{...S.btn,background:"#fbe9e2",color:P.danger,padding:"4px 10px",fontSize:12}}>🗑️ 清除</button></div>
+      {(data.alarms||[]).slice().sort(function(a,b){return a.time.localeCompare(b.time);}).map(function(a,i){return <div key={a.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"11px 0",borderTop:i>0?"1px solid "+P.border:"none"}}>
+        <div style={{...S.row,gap:12}}><div style={{fontFamily:"monospace",fontSize:17,color:a.enabled?P.accent:P.sub,fontWeight:700}}>{a.time}</div><div style={{fontSize:14,color:a.enabled?P.text:P.sub}}>{a.label}</div></div>
+        <div style={{...S.row,gap:6}}>
+          <button onClick={function(){upd({alarms:data.alarms.map(function(x){return x.id===a.id?Object.assign({},x,{enabled:!x.enabled}):x;})});}} style={{...S.btn,background:a.enabled?P.green:P.tag,color:a.enabled?"#fff":P.sub,padding:"5px 12px",fontSize:12,borderRadius:16}}>{a.enabled?"開":"關"}</button>
+          <button onClick={function(){upd({alarms:data.alarms.filter(function(x){return x.id!==a.id;})});}} style={{...S.btn,background:"#fbe9e2",color:P.danger,padding:"5px 10px",fontSize:12}}>✕</button>
+        </div>
+      </div>;})}
+    </div>}
+  </div>
+</div>}
 
-      const lastDateRef = useRef(todayStr());
-      useEffect(() => {
-        const today = todayStr();
-        if (today !== lastDateRef.current) { lastDateRef.current = today; firedAlarmsRef.clear(); setData(d => ({ ...d, completedToday: [], anchor: "" })); }
-      }, [now]);
+{/* ========== 回顧 ========== */}
+{tab===“stats”&&<div>
 
-      useEffect(() => {
-        const today = todayStr();
-        if (data.lastAutoGenDate === today) return;
-        const todayRoutines = getRoutinesForToday(data.routines);
-        const existingTexts = new Set(data.pendingItems.map(p => p.text));
-        const newItems = todayRoutines.filter(r => !existingTexts.has(r.label)).map(r => ({ id: genId(), text: r.label, priority: "medium", fromRoutine: r.id }));
-        if (newItems.length > 0 || data.lastAutoGenDate !== today) setData(d => ({ ...d, pendingItems: [...newItems, ...d.pendingItems], lastAutoGenDate: today }));
-      }, []);
+  <div style={S.sec}><div style={S.sB}><div style={{display:"flex",gap:12}}>
+    <div style={{flex:1,textAlign:"center",padding:"16px 8px",background:P.reward+"15",borderRadius:14}}><div style={{fontSize:36,fontWeight:900,color:P.reward,fontFamily:"'Noto Serif TC',serif"}}>{streak>0?"🔥 "+streak:"—"}</div><div style={{fontSize:12,color:P.sub,marginTop:4}}>連續天數</div></div>
+    <div style={{flex:1,textAlign:"center",padding:"16px 8px",background:P.green+"15",borderRadius:14}}><div style={{fontSize:36,fontWeight:900,color:P.green,fontFamily:"'Noto Serif TC',serif"}}>{data.totalCompleted||0}</div><div style={{fontSize:12,color:P.sub,marginTop:4}}>累計完成</div></div>
+  </div></div></div>
 
-      useEffect(() => {
-        const hh = String(now.getHours()).padStart(2, "0"); const mm = String(now.getMinutes()).padStart(2, "0"); const cur = `${hh}:${mm}`; const dateKey = todayStr();
-        (data.alarms || []).forEach(a => {
-          const fireKey = `${dateKey}_${a.id}_${cur}`;
-          if (a.enabled && a.time === cur && !firedAlarmsRef.has(fireKey)) {
-            firedAlarmsRef.add(fireKey); safeNotify(a.label); setBanner(a.label); setTimeout(() => setBanner(null), 5000);
-          }
-        });
-      }, [now, data.alarms]);
+  <div style={S.sec}><div style={S.sH}><span style={S.sT}>📊 過去 7 天</span></div>
+    <div style={S.sB}><div style={{display:"flex",gap:6,alignItems:"flex-end",height:120}}>
+      {last7.map(function(day,i){var h=day.count>0?Math.max(20,(day.count/maxL7)*90):4;var isT=day.date===todayStr();return <div key={day.date} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+        <div style={{fontSize:12,fontWeight:700,color:day.count>0?P.green:P.sub}}>{day.count||""}</div>
+        <div style={{width:"100%",height:h,borderRadius:6,background:day.count>0?P.green:P.tag,border:isT?"2px solid "+P.accent:"none"}}></div>
+        <div style={{fontSize:11,color:isT?P.accent:P.sub,fontWeight:isT?700:400}}>{day.wd}</div>
+      </div>;})}
+    </div></div>
+  </div>
 
-      useEffect(() => {
-        const interval = setInterval(() => {
-          setActiveTimer(prev => {
-            if (!prev || !prev.isRunning || prev.isFinished) return prev;
-            const curStep = prev.template.steps[prev.stepIndex];
-            if (curStep.duration === 0) return prev;
-            if (prev.secondsLeft > 1) return { ...prev, secondsLeft: prev.secondsLeft - 1 };
-            safeNotify(`${curStep.text} 時間到！`);
-            const nextIdx = prev.stepIndex + 1;
-            if (nextIdx < prev.template.steps.length) return { ...prev, stepIndex: nextIdx, secondsLeft: prev.template.steps[nextIdx].duration, isRunning: prev.template.steps[nextIdx].duration > 0 };
-            else { setData(d => ({ ...d, focusCompleted: (d.focusCompleted || 0) + 1 })); return { ...prev, isFinished: true, isRunning: false }; }
-          });
-        }, 1000);
-        return () => clearInterval(interval);
-      }, []);
+  <div style={S.sec}><div style={S.sH}><span style={S.sT}>🏆 今日里程碑</span></div>
+    <div style={S.sB}>{MILESTONES.map(function(m,i){var reached=completedCount>=m.count;return <div key={m.count} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 0",borderTop:i>0?"1px solid "+P.border:"none",opacity:reached?1:.4}}>
+      <div style={{fontSize:28,width:44,textAlign:"center"}}>{m.emoji}</div>
+      <div style={{flex:1}}><div style={{fontSize:14,fontWeight:700,color:reached?P.accent:P.sub}}>{m.title}</div><div style={{fontSize:12,color:P.sub}}>{m.msg}</div></div>
+      <div style={{fontSize:13,color:reached?P.green:P.sub,fontWeight:700}}>{reached?"✓":m.count+" 件"}</div>
+    </div>;})}</div>
+  </div>
 
-      useEffect(() => {
-        let t;
-        if (fiveMinTimer && fiveMinTimer.running && fiveMinTimer.timeLeft > 0) t = setTimeout(() => setFiveMinTimer(p => ({ ...p, timeLeft: p.timeLeft - 1 })), 1000);
-        else if (fiveMinTimer && fiveMinTimer.running && fiveMinTimer.timeLeft === 0) { safeNotify("5分鐘到了！繼續保持或休息一下。"); setFiveMinTimer(p => ({ ...p, running: false })); }
-        return () => clearTimeout(t);
-      }, [fiveMinTimer]);
+{data.moodLog.length>0&&<div style={S.sec}><div style={S.sH}><span style={S.sT}>💭 近期心情</span></div>
+<div style={S.sB}><div style={{display:“flex”,gap:4,flexWrap:“wrap”}}>{data.moodLog.slice(-14).map(function(entry,i){return <div key={i} style={{width:36,height:36,display:“flex”,alignItems:“center”,justifyContent:“center”,fontSize:20,background:P.tag,borderRadius:8}}>{entry.mood}</div>;})}</div></div>
 
-      const upd = (p) => setData(d => ({ ...d, ...p }));
-      
-      const minsToLeave = () => { if (!data.leaveTime) return null; const [h, m] = data.leaveTime.split(":").map(Number); return h * 60 + m - (now.getHours() * 60 + now.getMinutes()); };
-      const leaveCD = () => { const d = minsToLeave(); if (d === null) return null; if (d < 0) return "已出發 ✓"; if (d === 0) return "現在出門！"; return d >= 60 ? `${Math.floor(d / 60)} 小時 ${d % 60} 分後出門` : `${d} 分鐘後出門`; };
-      const urgent = (() => { const d = minsToLeave(); return d !== null && d <= (data.prepMinutes || 0) && d > 0; })();
+  </div>}
+</div>}
 
-      const addDL = () => { if (!newDL.name.trim() || !newDL.date) return; upd({ deadlines: [...data.deadlines, { id: genId(), ...newDL }] }); setNewDL({ name: "", date: "" }); };
-      const sortedDL = [...data.deadlines].sort((a, b) => new Date(a.date) - new Date(b.date));
+<div style={{textAlign:"center",marginTop:32,fontSize:13,color:P.sub,fontFamily:"'Noto Serif TC',serif",letterSpacing:2}}>一次只需要做好一件事 ✦</div>
 
-      const addPending = (text, priority = "medium") => { const t = (text || newPending).trim(); if (!t) return; upd({ pendingItems: [...data.pendingItems, { id: genId(), text: t, priority }] }); if (!text) setNewPending(""); };
-      const completePending = (id) => {
-        const item = data.pendingItems.find(p => p.id === id); const today = todayStr(); const hist = { ...data.completedHistory }; hist[today] = (hist[today] || 0) + 1;
-        setShowBurst(true); setTimeout(() => setShowBurst(false), 800);
-        upd({
-          pendingItems: data.pendingItems.filter(p => p.id !== id),
-          completedToday: [...data.completedToday, { text: item?.text, time: new Date().toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit" }) }],
-          completedHistory: hist,
-        });
-        if (item?.fromRoutine) upd({ routines: data.routines.map(r => r.id === item.fromRoutine ? { ...r, lastDone: today } : r) });
-      };
-      const updatePriority = (id, priority) => upd({ pendingItems: data.pendingItems.map(p => p.id === id ? { ...p, priority } : p) });
-      const sortedPending = [...data.pendingItems].sort((a, b) => SORT_ORDER[a.priority] - SORT_ORDER[b.priority]);
+</div>;
+}
 
-      const forgiveIncomplete = () => {
-        const lowPriorityItems = data.pendingItems.filter(p => p.priority === "low");
-        if (lowPriorityItems.length === 0 && data.pendingItems.length === 0) return;
-        const itemsToForgive = lowPriorityItems.length > 0 ? lowPriorityItems : data.pendingItems;
-        const idsToRemove = new Set(itemsToForgive.map(i => i.id));
-        setShowForgiveMsg(true); setTimeout(() => setShowForgiveMsg(false), 2500);
-        upd({ pendingItems: data.pendingItems.filter(p => !idsToRemove.has(p.id)), forgiveCount: (data.forgiveCount || 0) + 1 });
-      };
+ReactDOM.createRoot(document.getElementById(‘root’)).render(<App />);
+</script>
 
-      // 鬧鐘相關邏輯
-      const addAlarm = () => {
-        if (!newAlarm.label.trim()) return;
-        safeRequestNotifPerm(); let newAlarms = [...(data.alarms || [])];
-        if (newAlarm.type === 'fixed') {
-          if (newAlarm.time && !newAlarms.some(a => a.label === newAlarm.label && a.time === newAlarm.time)) newAlarms.push({ id: genId(), label: newAlarm.label, time: newAlarm.time, enabled: true });
-        } else {
-          if (!newAlarm.interval || !newAlarm.start || !newAlarm.end) return;
-          let [sh, sm] = newAlarm.start.split(':').map(Number); let [eh, em] = newAlarm.end.split(':').map(Number);
-          let curMin = sh * 60 + sm, endMin = eh * 60 + em, intMin = Math.max(0.5, Number(newAlarm.interval)) * 60;
-          while (curMin <= endMin) {
-            let timeStr = `${String(Math.floor(curMin / 60)).padStart(2, '0')}:${String(curMin % 60).padStart(2, '0')}`;
-            if (!newAlarms.some(a => a.label === newAlarm.label && a.time === timeStr)) newAlarms.push({ id: genId(), label: newAlarm.label, time: timeStr, enabled: true });
-            curMin += intMin;
-          }
-        }
-        upd({ alarms: newAlarms }); setNewAlarm({ label: "", type: "fixed", time: "", interval: 1, start: "09:00", end: "21:00" });
-      };
-      const applyPreset = (preset) => {
-        safeRequestNotifPerm(); let newAlarms = [...(data.alarms || [])];
-        if (preset.type === 'fixed') {
-          if (!newAlarms.some(a => a.label === preset.label && a.time === preset.time)) newAlarms.push({ id: genId(), label: preset.label, time: preset.time, enabled: true });
-        } else {
-          let [sh, sm] = preset.start.split(':').map(Number); let [eh, em] = preset.end.split(':').map(Number);
-          let curMin = sh * 60 + sm, endMin = eh * 60 + em, intMin = Math.max(0.5, Number(preset.interval)) * 60;
-          while (curMin <= endMin) {
-            let timeStr = `${String(Math.floor(curMin / 60)).padStart(2, '0')}:${String(curMin % 60).padStart(2, '0')}`;
-            if (!newAlarms.some(a => a.label === preset.label && a.time === timeStr)) newAlarms.push({ id: genId(), label: preset.label, time: timeStr, enabled: true });
-            curMin += intMin;
-          }
-        }
-        upd({ alarms: newAlarms });
-      };
-      const addPreset = () => {
-        if (!newPreset.label.trim() || (newPreset.type === 'fixed' && !newPreset.time) || (newPreset.type === 'interval' && (!newPreset.interval || !newPreset.start || !newPreset.end))) return;
-        upd({ alarmPresets: [...data.alarmPresets, { id: `p_${genId()}`, ...newPreset }] });
-        setNewPreset({ label: "", type: newPreset.type, time: "", interval: 1, start: "09:00", end: "21:00" });
-      };
-
-      // 例行相關邏輯
-      const canSaveRoutine = (d) => d.label.trim() && (d.period !== "weekly" || d.weekdays?.length > 0) && (d.period !== "monthly" || d.monthdays?.length > 0);
-      const groupedRoutines = { daily: data.routines.filter(r => r.period === "daily"), weekly: data.routines.filter(r => r.period === "weekly"), monthly: data.routines.filter(r => r.period === "monthly"), yearly: data.routines.filter(r => r.period === "yearly") };
-
-      // 專注相關邏輯
-      const openFocusEditor = (tpl = null) => { const target = tpl ? JSON.parse(JSON.stringify(tpl)) : emptyFocusDraft(); setEditingFocus(target.id); setFocusDraft(target); };
-      const closeFocusEditor = () => { setEditingFocus(null); setFocusDraft(null); };
-      const saveFocusDraft = () => {
-        if (!focusDraft.title.trim()) return; let arr = [...data.focusTemplates]; const idx = arr.findIndex(t => t.id === focusDraft.id);
-        if (idx >= 0) arr[idx] = focusDraft; else arr.push(focusDraft); upd({ focusTemplates: arr }); closeFocusEditor();
-      };
-      const focusUpdateStepTime = (idx, type, value) => {
-        const steps = [...focusDraft.steps]; const total = steps[idx].duration || 0; const curMin = Math.floor(total / 60), curSec = total % 60;
-        let v = parseInt(value) || 0; if (v < 0) v = 0;
-        if (type === 'min') steps[idx].duration = v * 60 + curSec; else if (type === 'sec') { if (v > 59) v = 59; steps[idx].duration = curMin * 60 + v; } else if (type === 'text') steps[idx].text = value;
-        setFocusDraft({ ...focusDraft, steps });
-      };
-
-      const timeStr = now.toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit" });
-      const dateStr = now.toLocaleDateString("zh-TW", { month: "long", day: "numeric", weekday: "long" });
-      const streak = calcStreak(data.completedHistory);
-
-      // ============ 全螢幕：強制放下手機 ============
-      if (forceDropMode) {
-        return (
-          <div style={{ ...st.app, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: P.accent, color: '#fff' }}>
-            <div style={{ fontSize: 80, marginBottom: 20 }}>📱⬇️</div><div style={{ fontSize: 24, fontWeight: 900, marginBottom: 16 }}>請把手機翻面蓋上</div>
-            <div style={{ fontSize: 15, opacity: 0.8, marginBottom: 40, textAlign: 'center', padding: '0 20px' }}>世界不會因為你離開幾分鐘就停止轉動。<br/>深呼吸，去做眼前該做的事。</div>
-            <button onClick={() => setForceDropMode(false)} style={{ ...st.btn, background: 'transparent', border: '2px solid rgba(255,255,255,0.3)', color: '#fff', padding: '12px 32px', borderRadius: 30 }}>我回來了</button>
-          </div>
-        );
-      }
-
-      // ============ 全螢幕：專注定時器 ============
-      if (activeTimer) {
-        if (activeTimer.isFinished) return (
-          <div style={{ ...st.app, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-            <div style={{ fontSize: 72, marginBottom: 20, animation: "gentleFloat 2s ease-in-out infinite" }}>🎉</div><div style={{ fontSize: 28, fontWeight: 900, color: P.accent, marginBottom: 12 }}>太棒了！順利過關！</div>
-            <button onClick={() => setActiveTimer(null)} style={{ ...st.btn, background: P.accent, color: '#fff', padding: "16px 48px", fontSize: 18, borderRadius: 30 }}>完成返回</button>
-          </div>
-        );
-        const curStep = activeTimer.template.steps[activeTimer.stepIndex]; const formatClock = (sec) => `${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`;
-        return (
-          <div style={{ ...st.app, padding: 24, display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 30 }}><button onClick={() => setActiveTimer(null)} style={{ background: 'transparent', border: 'none', color: P.sub, fontSize: 15 }}>✕ 結束</button><span style={{ color: P.sub, fontSize: 13, fontWeight: 700 }}>{activeTimer.stepIndex + 1}/{activeTimer.template.steps.length}</span></div>
-            {bodyDoublingEnabled && <div style={{ textAlign: "center", marginBottom: 16 }}><BodyDoubling enabled={true} focuserCount={focuserCount} /></div>}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-              <div style={{ fontSize: 24, fontWeight: 700, color: P.text, marginBottom: 30, textAlign: 'center' }}>{curStep.text}</div>
-              {curStep.duration > 0 ? <div style={{ fontSize: 68, fontWeight: 900, color: P.accent, fontFamily: 'monospace' }}>{formatClock(activeTimer.secondsLeft)}</div> : <div style={{ fontSize: 17, color: P.sub }}>無時間限制，完成請按下一步</div>}
-              <div style={{ marginTop: 44, display: 'flex', gap: 16 }}>
-                {curStep.duration > 0 && <button onClick={() => setActiveTimer(p => ({...p, isRunning: !p.isRunning}))} style={{ ...st.btn, background: P.tag, color: P.accent, width: 60, height: 60, borderRadius: 30, fontSize: 22 }}>{activeTimer.isRunning ? '⏸' : '▶️'}</button>}
-                <button onClick={() => { const nextIdx = activeTimer.stepIndex + 1; if (nextIdx < activeTimer.template.steps.length) setActiveTimer(p => ({ ...p, stepIndex: nextIdx, secondsLeft: p.template.steps[nextIdx].duration, isRunning: p.template.steps[nextIdx].duration > 0 })); else { setData(d => ({ ...d, focusCompleted: (d.focusCompleted || 0) + 1 })); setActiveTimer(p => ({ ...p, isFinished: true, isRunning: false })); } }} style={{ ...st.btn, background: P.accent, color: '#fff', height: 60, borderRadius: 30, padding: "0 36px", fontSize: 17 }}>完成，下一步 ⏭</button>
-              </div>
-            </div>
-          </div>
-        );
-      }
-
-      // ============ 介面 ============
-      return (
-        <div style={st.app}>
-          <CompletionBurst show={showBurst} />
-          {showForgiveMsg && (
-            <div style={{ position: "fixed", top: "40%", left: "50%", transform: "translate(-50%, -50%)", zIndex: 9999, background: "rgba(255,255,255,0.9)", padding: "20px 40px", borderRadius: 20, boxShadow: "0 10px 30px rgba(0,0,0,0.1)", textAlign: "center", animation: "fadeOutUp 2s ease-in forwards" }}>
-              <div style={{ fontSize: 24, fontWeight: 700, color: P.sakura, marginBottom: 8 }}>今天這樣就很好了</div><div style={{ fontSize: 14, color: P.sub }}>明天再說吧 🍃</div>
-            </div>
-          )}
-          {banner && (
-            <div onClick={() => setBanner(null)} style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 999, background: P.accent, color: "#fff", padding: "calc(env(safe-area-inset-top, 0px) + 14px) 20px 14px", fontSize: 16, textAlign: "center", fontWeight: 700, boxShadow: "0 2px 12px rgba(0,0,0,.15)", cursor: "pointer" }}>
-              ⏰ {banner} <span style={{ fontSize: 12, opacity: 0.7, marginLeft: 8 }}>點擊關閉</span>
-            </div>
-          )}
-
-          <div style={{ padding: "calc(env(safe-area-inset-top, 0px) + 20px) 18px 14px", borderBottom: `1px solid ${P.border}`, background: P.card }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
-              <div><div style={{ fontSize: 24, fontWeight: 900, color: P.accent }}>ADHD 核心管理</div><div style={{ fontSize: 13, color: P.sub, marginTop: 4 }}>{dateStr}</div></div>
-              <div style={{ textAlign: "right" }}><div style={{ fontSize: 28, fontWeight: 700, color: P.accent, fontFamily: "monospace" }}>{timeStr}</div></div>
-            </div>
-            <div style={{ display: "flex", gap: 6, marginTop:
+</body>
+</html>
